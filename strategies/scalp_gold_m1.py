@@ -114,8 +114,12 @@ STRATEGY = Strategy(
     broker_gmt_offset=2,        # FxPro runs EET/EEST
     broker_dst="eu",
 
-    date_from="2026-06-01",
-    date_to="2026-08-01",
+    # 12 months, matching the window the TradingView run covers so the two can
+    # be compared directly.  Reaching this far back needs the terminal's
+    # [Charts] MaxBars above ~370k (the M1 bar count); at the default 100000
+    # copy_rates_range silently returns nothing for a window this wide.
+    date_from="2025-09-01",
+    date_to="2026-08-29",
 
     deposit=10000.0,
     currency="USD",
@@ -125,9 +129,13 @@ STRATEGY = Strategy(
     # Gold swaps are strongly asymmetric - holding long costs about 3x what
     # holding short earns - so a single blended rate would misprice the book.
     # See results/ScalpGoldM1_reconcile.txt to recalibrate.
+    # Recalibrated for the 12-month window.  The 2-month calibration read
+    # -77.71 on the long side; over a full year the average is a good deal
+    # milder, which is exactly the drift the README warns about - a cost model
+    # fitted to a short window does not survive a change of period.
     costs=Costs(
-        commission_per_lot=7.93,
-        swap_long_per_lot_night=-77.71,
-        swap_short_per_lot_night=23.40,
+        commission_per_lot=7.85,
+        swap_long_per_lot_night=-52.40,
+        swap_short_per_lot_night=23.58,
     ),
 )

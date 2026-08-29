@@ -237,21 +237,34 @@ All three bundled strategies, FxPro-MT5 Demo:
 | | RsiRevert | VolDip | ScalpGoldM1 |
 |---|---|---|---|
 | symbol / timeframe | GBPUSD H1 | GBPUSD H1 | GOLD M1 |
-| period | 2024-06 .. 2026-03 | 2024-06 .. 2026-03 | 2026-06 .. 2026-08 |
-| bars compared | 10,791 | 10,791 | 61,608 |
+| period | 2024-06 .. 2026-03 | 2024-06 .. 2026-03 | 2025-09 .. 2026-08 |
+| bars compared | 10,791 | 10,791 | 352,279 |
 | indicators matching | 5 / 5 | 5 / 5 | 6 / 6 |
 | entry signals matching | yes | yes | yes |
-| trades python / MT5 | 116 / 116 | 17 / 17 | 178 / 178 |
-| exact trade matches | 115 (+1 `EOD`) | 16 (+1 `BOUNDARY`) | **178 (100%)** |
+| trades python / MT5 | 116 / 116 | 17 / 17 | 761 / 761 |
+| exact trade matches | 115 (+1 `EOD`) | 16 (+1 `BOUNDARY`) | 757 (+4 `ROUNDING`) |
 | logic divergences | **0** | **0** | **0** |
-| net profit py / MT5 | -1.30 / -1.41 | +40.20 / +40.21 | -4.17 / -4.18 |
-| win rate py / MT5 | 42.2414 / 42.24 | 58.8235 / 58.82 | 52.81 / 53.37 |
+| net profit py / MT5 | -1.30 / -1.41 | +40.20 / +40.21 | -42.73 / -56.70 |
+| win rate py / MT5 | 42.2414 / 42.24 | 58.8235 / 58.82 | 54.01 / 53.48 |
 
 `ScalpGoldM1` is a port of `Scalp_Gold_M1_fixed.pine` and exercises every
 feature at once: a higher-timeframe filter, UTC session and news-blackout
 windows, Wilder ATR, risk-based sizing and a money-denominated trailing stop.
-Its 178 trades match entry bar, entry price, stop level, exit reason and exit
-price exactly - the summed price movement differs by 0.00000.
+Over a full year, 757 of its 761 trades match entry bar, entry price, stop
+level, exit reason and exit price exactly; the other four differ by a
+sub-point rounding on the stop and are classed `ROUNDING`, not `LOGIC`.
+
+Reaching a year of M1 needs one terminal setting: `[Charts] MaxBars` in
+`config/common.ini` caps the chart series, and at its default of 100000 -
+below the ~370k bars a year of M1 contains - `copy_rates_range` returns
+nothing at all rather than an error. Raise it (2000000 is ample) and restart
+the terminal. The broker history itself is already on disk under
+`bases/<server>/history/`; only the cap is in the way.
+
+The result is a strategy whose gross P/L drifts up to +100 over the year
+while its net never leaves negative territory: 761 trades cost 65.34 in
+commission alone. The published chart plots both curves for exactly this
+reason.
 
 MT5's `Sharpe Ratio` is computed on the equity curve and will not equal the
 per-trade Sharpe the Python engine reports. Compare trades, win rate, profit

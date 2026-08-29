@@ -3,54 +3,55 @@
 ==========================================================================
 
 -- 1. indicators (bar by bar) --------------------------------------------
-   bars compared : 61608
+   bars compared : 352279
    indicator               n   max_abs_diff   max_rel_diff    n_bad  verdict
-   bb_basis            61608      4.457e-11      1.110e-14        0  MATCH
-   bb_dev              61608      5.000e-11      2.161e-10        0  MATCH
-   bb_upper            61608      5.002e-11      1.260e-14        0  MATCH
-   bb_lower            61608      5.002e-11      1.261e-14        0  MATCH
-   atr                 61608      5.000e-11      1.037e-10        0  MATCH
-   h1_ema              61608      5.002e-11      1.238e-14        0  MATCH
-   sig_long            61608      0.000e+00      0.000e+00        0  MATCH
-   sig_short           61608      0.000e+00      0.000e+00        0  MATCH
+   bb_basis           352279      4.547e-11      1.280e-14        0  MATCH
+   bb_dev             352279      5.000e-11      5.168e-10        0  MATCH
+   bb_upper           352279      5.002e-11      1.452e-14        0  MATCH
+   bb_lower           352279      5.002e-11      1.452e-14        0  MATCH
+   atr                352279      5.000e-11      1.807e-10        0  MATCH
+   h1_ema             352279      5.002e-11      1.428e-14        0  MATCH
+   sig_long           352279      0.000e+00      0.000e+00        0  MATCH
+   sig_short          352279      0.000e+00      0.000e+00        0  MATCH
    => PASS (0/8 indicators diverge)
 
 -- 2. trades -------------------------------------------------------------
-   python : 178 trades
-   mt5    : 178 trades
-   MATCH       178
-   exact match rate : 100.0%
-   net move python  : +16.76000
-   net move mt5     : +16.76000
-   difference       : +0.00000
+   python : 761 trades
+   mt5    : 761 trades
+   MATCH       757
+   ROUNDING      4
+   exact match rate : 99.5%
+   net move python  : +85.99000
+   net move mt5     : +75.15000
+   difference       : -10.84000
 
 -- 2b. where the money went ----------------------------------------------
    The Python engine prices movement only; MT5 also books
    swap and commission.  Gross must match, costs explain the rest.
-   gross P/L from price (mt5) :     +14.28
-   swap                       :      -3.86
-   commission                 :     -14.60
+   gross P/L from price (mt5) :     +40.01
+   swap                       :     -31.67
+   commission                 :     -65.04
    ------------------------------------------
-   MT5 booked net             :      -4.18
+   MT5 booked net             :     -56.70
 
    Calibrated cost model - paste into the strategy spec:
 
        costs=Costs(
-           commission_per_lot=7.93,
-           swap_long_per_lot_night=-77.71,
-           swap_short_per_lot_night=23.40,
+           commission_per_lot=7.85,
+           swap_long_per_lot_night=-52.40,
+           swap_short_per_lot_night=23.58,
        ),
 
-   (40 weighted rollovers over 178 trades)
+   (149 weighted rollovers over 761 trades)
 
 -- 3. headline figures --------------------------------------------------
                                   python            mt5
-   trades                       178.0000       178.0000
-   net profit                    -4.1706        -4.1800
-   win rate %                    52.8090        53.3700
-   profit factor                  0.9875         0.9900
-   sharpe                        -0.0787        -0.7400
-   max DD %                       0.5748         0.5900
+   trades                       761.0000       761.0000
+   net profit                   -42.7323       -56.7000
+   win rate %                    54.0079        53.4800
+   profit factor                  0.9700         0.9600
+   sharpe                        -0.3823        -1.6500
+   max DD %                       0.9818         0.9600
 
 ==========================================================================
   VERDICT: PASS
