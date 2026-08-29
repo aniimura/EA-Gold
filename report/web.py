@@ -46,8 +46,13 @@ def _verdict(name):
     return {"verdict": m.group(1), "match_rate": float(tr.group(1)) if tr else None}
 
 
-def build(strategy):
-    """Write ``index.html`` at the repository root and return its path."""
+def build(strategy, strategy_path=None):
+    """Write ``index.html`` at the repository root and return its path.
+
+    ``strategy_path`` is only used to print the exact commands that regenerate
+    the page, so the instructions at the top always name the file that actually
+    produced it rather than a guess.
+    """
     name = strategy.name
     tr_path = os.path.join(config.RESULTS_DIR, "%s_py_trades.csv" % name)
     if not os.path.isfile(tr_path):
@@ -85,8 +90,14 @@ def build(strategy):
     py = _load_json(os.path.join(config.RESULTS_DIR, "%s_py_stats.json" % name))
     mt5 = _load_json(os.path.join(config.RESULTS_DIR, "%s_mt5_stats.json" % name))
 
+    if strategy_path:
+        rel = os.path.relpath(os.path.abspath(strategy_path), ROOT).replace("\\", "/")
+    else:
+        rel = "strategies/%s.py" % name.lower()
+
     meta = {
         "name": name,
+        "strategy_file": rel,
         "symbol": strategy.symbol,
         "timeframe": strategy.timeframe,
         "date_from": str(strategy.date_from),
@@ -131,6 +142,16 @@ _TEMPLATE = r"""<!doctype html>
   body{margin:0;background:var(--bg);color:var(--ink);
        font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+  .howto{border:1px solid var(--line);border-left:4px solid var(--accent);
+         background:var(--panel);border-radius:10px;padding:16px 18px;margin-bottom:24px}
+  .howto h2{margin:0 0 10px;font-size:15px;font-weight:650}
+  .howto p{margin:0 0 8px}
+  .howto .say{background:var(--grid);border-radius:8px;padding:12px 14px;margin:8px 0 14px;
+              font-size:15px;font-weight:600;line-height:1.6}
+  .howto details{margin-top:6px}
+  .howto summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+  .howto pre{background:var(--grid);border-radius:8px;padding:12px 14px;margin:8px 0 0;
+             overflow-x:auto;font-size:12px;line-height:1.7}
   header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
   h1{margin:0 0 6px;font-size:22px;letter-spacing:-.01em}
   .sub{color:var(--muted);font-size:13px}
@@ -164,6 +185,25 @@ _TEMPLATE = r"""<!doctype html>
 </head>
 <body>
 <div class="wrap">
+  <div class="howto">
+    <h2>🔄 このページを更新する方法</h2>
+    <p>Claude Code に、こう言うだけです：</p>
+    <div class="say">「バックテストを実行して、結果を GitHub Pages で見れるようにして」</div>
+    <p style="color:var(--muted);font-size:12px;margin:0">
+      バックテストの再実行 → このページの再生成 → GitHub への push まで、まとめて行われます。</p>
+    <details>
+      <summary>自分で実行する場合のコマンド</summary>
+      <pre id="cmds"></pre>
+    </details>
+  </div>
+
+  <noscript>
+    <div class="howto" style="border-left-color:var(--red)">
+      <h2>グラフを表示するには JavaScript が必要です</h2>
+      <p style="margin:0">このページはトレードデータを埋め込み、ブラウザ側で SVG を描画しています。</p>
+    </div>
+  </noscript>
+
   <header>
     <h1 id="title"></h1>
     <div class="sub" id="subtitle"></div>
@@ -175,19 +215,19 @@ _TEMPLATE = r"""<!doctype html>
     <h2>Cumulative P/L</h2>
     <p class="hint">Solid = net (after swap and commission). Dashed = gross, price movement only.
        Where they separate, costs are eating the edge.</p>
-    <svg id="equity" viewBox="0 0 1200 420" preserveAspectRatio="none"></svg>
+    <svg id="equity" viewBox="0 0 1200 420"></svg>
     <div class="tip" id="tip"></div>
   </div>
 
   <div class="panel" id="excPanel">
     <h2>Run-ups and drawdowns</h2>
     <p class="hint">Best and worst open P/L reached during each trade.</p>
-    <svg id="exc" viewBox="0 0 1200 180" preserveAspectRatio="none"></svg>
+    <svg id="exc" viewBox="0 0 1200 180"></svg>
   </div>
 
   <div class="panel">
     <h2>Wins and losses</h2>
-    <svg id="strip" viewBox="0 0 1200 34" preserveAspectRatio="none"></svg>
+    <svg id="strip" viewBox="0 0 1200 34"></svg>
   </div>
 
   <div class="panel" id="cmpPanel">
@@ -217,6 +257,13 @@ const dstr = ms => { const x = new Date(ms);
 const cum = a => { let s=0; return a.map(v => s += (v||0)); };
 const cumNet = cum(D.net), cumGross = cum(D.gross);
 const n = D.t.length;
+
+/* ---------- how to update ---------- */
+document.getElementById("cmds").textContent = [
+  "python cli.py pybt " + META.strategy_file + " --bars   # バックテスト",
+  "python cli.py web  " + META.strategy_file + "          # このページを再生成",
+  "git add -A && git commit -m \"update results\" && git push",
+].join("\n");
 
 /* ---------- header ---------- */
 document.title = META.name + " - " + META.symbol + " " + META.timeframe;

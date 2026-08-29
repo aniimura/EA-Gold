@@ -217,7 +217,7 @@ def cmd_chart(args, strategy=None):
 def cmd_web(args, strategy=None):
     s = strategy or load_strategy(args.strategy)
     print("== GitHub Pages ==")
-    path = web.build(s)
+    path = web.build(s, strategy_path=args.strategy)
     print("  saved  : %s" % path)
     print("  commit index.html, then enable Pages (branch: main, folder: / root)")
     return 0
