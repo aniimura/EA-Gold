@@ -1,0 +1,12 @@
+{
+  "name": "GBPUSD",
+  "digits": 5,
+  "point": 1e-05,
+  "trade_stops_level": 0,
+  "trade_freeze_level": 0,
+  "contract_size": 100000.0,
+  "volume_min": 0.01,
+  "volume_step": 0.01,
+  "tick_size": 1e-05,
+  "tick_value": 160.064
+}

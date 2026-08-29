@@ -1,0 +1,19 @@
+{
+  "bars": 9807,
+  "total_net_profit": 31.34,
+  "gross_profit": 73.63,
+  "max_dd": 11.64,
+  "max_dd_pct": 0.12,
+  "max_eq_dd": 17.22,
+  "max_eq_dd_pct": 0.17,
+  "gross_loss": -42.29,
+  "profit_factor": 1.74,
+  "expected_payoff": 1.96,
+  "recovery_factor": 1.82,
+  "sharpe_ratio": 2.3,
+  "total_trades": 16,
+  "total_deals": 32,
+  "profit_trades": 9,
+  "win_rate": 56.25,
+  "elapsed_s": 11.1
+}

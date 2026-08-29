@@ -1,0 +1,117 @@
+bar_time,in_py,in_mt5,class,detail,direction,entry_py,entry_mt5,d_entry_pts,d_sl_pts,d_tp_pts,exit_py,exit_mt5,d_exit_pts,points_py,points_mt5,ambiguous
+2024-06-07 17:00:00,True,True,MATCH,,long,1.27262,1.27262,0.0,0.0,0.0,SL,SL,0.0,-0.0032700000000001,-0.003270000000000106,False
+2024-06-10 14:00:00,True,True,MATCH,,long,1.26969,1.26969,0.0,0.0,0.0,TP,TP,0.0,0.00336,0.0033600000000000296,False
+2024-06-14 12:00:00,True,True,MATCH,,long,1.27225,1.27225,0.0,0.0,0.0,SL,SL,0.0,-0.0017600000000002,-0.0017600000000002058,False
+2024-06-17 10:00:00,True,True,MATCH,,long,1.26688,1.26688,0.0,0.0,0.0,TP,TP,0.0,0.0025299999999999,0.002529999999999921,False
+2024-06-20 15:00:00,True,True,MATCH,,long,1.26812,1.26812,0.0,0.0,0.0,SL,SL,0.0,-0.0017399999999998,-0.0017399999999998528,False
+2024-06-21 04:00:00,True,True,MATCH,,long,1.26565,1.26565,0.0,0.0,0.0,SL,SL,0.0,-0.0023599999999999,-0.0023599999999999177,False
+2024-06-26 16:00:00,True,True,MATCH,,long,1.26456,1.26456,0.0,0.0,0.0,SL,SL,0.0,-0.0019,-0.0019000000000000128,False
+2024-06-27 04:00:00,True,True,MATCH,,long,1.26148,1.26148,0.0,0.0,0.0,TP,TP,0.0,0.0039900000000001,0.00399000000000016,False
+2024-07-18 21:00:00,True,True,MATCH,,long,1.29618,1.29618,0.0,0.0,0.0,SL,SL,0.0,-0.00259,-0.0025900000000000922,False
+2024-07-19 11:00:00,True,True,MATCH,,long,1.29295,1.29295,0.0,0.0,0.0,SL,SL,0.0,-0.0019899999999999,-0.0019899999999999363,False
+2024-07-25 23:00:00,True,True,MATCH,,long,1.28532,1.28532,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.0031499999999999,0.003149999999999986,False
+2024-07-29 11:00:00,True,True,MATCH,,long,1.28334,1.28334,0.0,0.0,0.0,SL,SL,0.0,-0.00234,-0.0023400000000000087,False
+2024-08-01 10:00:00,True,True,MATCH,,long,1.28069,1.28069,0.0,0.0,0.0,SL,SL,0.0,-0.0028000000000001,-0.0028000000000001357,False
+2024-08-01 22:00:00,True,True,MATCH,,long,1.27277,1.27277,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.00746,0.007460000000000022,False
+2024-08-06 14:00:00,True,True,MATCH,,long,1.26883,1.26883,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.0052700000000001,0.005270000000000108,False
+2024-08-29 18:00:00,True,True,MATCH,,long,1.3156,1.3156,0.0,0.0,0.0,SL,SL,0.0,-0.0036100000000001,-0.003610000000000113,False
+2024-08-30 20:00:00,True,True,MATCH,,long,1.31196,1.31196,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.0017199999999999,0.0017199999999999438,False
+2024-09-09 12:00:00,True,True,MATCH,,long,1.30886,1.30886,0.0,0.0,0.0,SL,SL,0.0,-0.0022899999999999,-0.0022899999999999032,False
+2024-09-11 18:00:00,True,True,MATCH,,long,1.30151,1.30151,0.0,0.0,0.0,TP,TP,0.0,0.0059200000000001,0.005920000000000147,False
+2024-09-25 22:00:00,True,True,MATCH,,long,1.33256,1.33256,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.00537,0.005370000000000097,False
+2024-10-01 15:00:00,True,True,MATCH,,long,1.33205,1.33205,0.0,0.0,0.0,SL,SL,0.0,-0.0032999999999998,-0.0032999999999998586,False
+2024-10-03 09:00:00,True,True,MATCH,,long,1.3184,1.3184,0.0,0.0,0.0,SL,SL,0.0,-0.00313,-0.003130000000000077,False
+2024-10-03 21:00:00,True,True,MATCH,,long,1.31241,1.31241,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.00458,0.0045800000000000285,False
+2024-10-04 16:00:00,True,True,MATCH,,long,1.30793,1.30793,0.0,0.0,0.0,TIME,TIME,0.0,0.00034,0.00034000000000000696,False
+2024-10-16 10:00:00,True,True,MATCH,,long,1.299,1.299,0.0,0.0,0.0,TP,TP,0.0,0.00421,0.004210000000000047,False
+2024-10-21 19:00:00,True,True,MATCH,,long,1.29802,1.29802,0.0,0.0,0.0,SL,SL,0.0,-0.00268,-0.0026800000000000157,False
+2024-10-23 21:00:00,True,True,MATCH,,long,1.29135,1.29135,0.0,0.0,0.0,TP,TP,0.0,0.0049399999999999,0.0049399999999999444,False
+2024-10-30 15:00:00,True,True,MATCH,,long,1.29496,1.29496,0.0,0.0,0.0,TP,TP,0.0,0.0045899999999998,0.004589999999999872,False
+2024-10-31 17:00:00,True,True,MATCH,,long,1.28909,1.28909,0.0,0.0,0.0,TP,TP,0.0,0.0072099999999999,0.007209999999999939,False
+2024-11-06 06:00:00,True,True,MATCH,,long,1.28887,1.28887,0.0,0.0,0.0,SIGNAL,SIGNAL,0.0,0.0067300000000001,0.006730000000000125,False
+2024-11-08 19:00:00,True,True,MATCH,,long,1.29025,1.29025,0.0,0.0,0.0,SL,SL,0.0,-0.0037699999999998,-0.003769999999999829,False
+2024-11-11 16:00:00,True,True,MATCH,,long,1.28674,1.28674,0.0,0.0,0.0,SL,SL,0.0,-0.00313,-0.003130000000000077,False
+2024-11-12 07:00:00,True,True,MATCH,,long,1.2845,1.2845,0.0,0.0,0.0,SL,SL,0.0,-0.00214,-0.0021400000000000308,False
+2024-11-12 19:00:00,True,True,MATCH,,long,1.27328,1.27328,0.0,0.0,0.0,SL,SL,0.0,-0.00438,-0.0043800000000000505,False
+2024-11-14 05:00:00,True,True,MATCH,,long,1.26843,1.26843,0.0,0.0,0.0,SL,SL,0.0,-0.0037899999999999,-0.00378999999999996,False
+2024-11-21 19:00:00,True,True,MATCH,,long,1.25859,1.25859,0.0,0.0,0.0,SL,SL,0.0,-0.0037100000000001,-0.003710000000000102,False
+2024-11-22 12:00:00,True,True,MATCH,,long,1.25122,1.25122,0.0,0.0,0.0,TP,TP,0.0,0.0048099999999999,0.004809999999999981,False
+2024-12-12 18:00:00,True,True,MATCH,,long,1.26896,1.26896,0.0,0.0,0.0,SL,SL,0.0,-0.0037100000000001,-0.003710000000000102,False
+2024-12-13 10:00:00,True,True,MATCH,,long,1.2627,1.2627,0.0,0.0,0.0,TP,TP,0.0,0.00373,0.003730000000000011,False
+2024-12-18 22:00:00,True,True,MATCH,,long,1.25948,1.25948,0.0,0.0,0.0,SL,SL,0.0,-0.0053799999999999,-0.00537999999999994,False
+2024-12-19 19:00:00,True,True,MATCH,,long,1.25278,1.25278,0.0,0.0,0.0,SL,SL,0.0,-0.00503,-0.00503000000000009,False
+2024-12-20 07:00:00,True,True,MATCH,,long,1.24827,1.24827,0.0,0.0,0.0,TP,TP,0.0,0.00537,0.005370000000000097,False
+2025-01-02 12:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-01-03 00:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-01-08 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-01-09 09:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-01-13 03:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-01-17 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-02-03 01:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-02-06 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-02-27 20:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-02-28 21:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-03-21 07:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-03-26 16:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-04-04 12:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-04-07 01:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-04-07 19:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-04-23 01:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-04-30 17:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-05-01 09:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-05-12 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-05-28 08:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-05-29 03:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-06-10 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-06-17 18:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-06-18 06:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-06-23 01:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-02 13:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-07 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-08 17:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-11 15:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-14 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-14 22:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-15 20:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-25 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-28 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-28 23:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-30 22:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-07-31 17:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-08-01 13:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-08-18 22:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-08-20 06:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-08-22 08:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-08-27 14:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-08-29 13:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-02 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-03 07:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-18 17:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-19 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-19 22:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-24 13:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-09-25 16:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-02 18:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-07 15:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-09 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-10 14:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-14 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-22 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-28 16:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-29 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-10-30 15:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-11-04 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-11-04 23:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-11-19 18:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-12-17 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2025-12-31 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-01-08 00:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-01-08 16:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-01-15 16:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-01-19 01:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-02-02 02:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-02-05 11:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-02-17 10:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-02-18 22:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-02-19 15:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,
+2026-02-26 20:00:00,True,False,LOGIC,python-only trade,long,,,,,,,,,,,

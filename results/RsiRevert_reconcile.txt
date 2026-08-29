@@ -1,0 +1,76 @@
+==========================================================================
+  RECONCILIATION  RsiRevert
+==========================================================================
+
+-- 1. indicators (bar by bar) --------------------------------------------
+   bars compared : 3609
+   indicator               n   max_abs_diff   max_rel_diff    n_bad  verdict
+   atr                  3609      4.286e-11      8.439e-08        0  MATCH
+   rsi                  3609      5.000e-11      3.244e-12        0  MATCH
+   ema100               3609      4.999e-11      3.956e-11        0  MATCH
+   hi20                 3609      2.220e-16      1.768e-16        0  MATCH
+   stretch              3609      4.999e-11      1.281e-06        0  MATCH
+   sig_long             3609      0.000e+00      0.000e+00        0  MATCH
+   sig_short            3609      0.000e+00      0.000e+00        0  MATCH
+   => PASS (0/7 indicators diverge)
+
+-- 2. trades -------------------------------------------------------------
+   python : 116 trades
+   mt5    : 42 trades
+   MATCH        42
+   LOGIC        74
+   exact match rate : 36.2%
+   net move python  : +0.01084
+   net move mt5     : +0.01448
+   difference       : +0.00364
+
+-- 2b. where the money went ----------------------------------------------
+   The Python engine prices movement only; MT5 also books
+   swap and commission.  Gross must match, costs explain the rest.
+   gross P/L from price (mt5) :     +14.48
+   swap                       :      -1.26
+   commission                 :      -3.36
+   ------------------------------------------
+   MT5 booked net             :      +9.86
+
+   Calibrated cost model - paste into the strategy spec:
+
+       costs=Costs(
+           commission_per_lot=8.00,
+           swap_long_per_lot_night=-2.52,
+           swap_short_per_lot_night=-2.52,
+       ),
+
+   (50 weighted rollovers over 42 trades)
+
+   first 15 logic divergences:
+     2025-01-02 12:00:00  python-only trade
+     2025-01-03 00:00:00  python-only trade
+     2025-01-08 11:00:00  python-only trade
+     2025-01-09 09:00:00  python-only trade
+     2025-01-13 03:00:00  python-only trade
+     2025-01-17 10:00:00  python-only trade
+     2025-02-03 01:00:00  python-only trade
+     2025-02-06 11:00:00  python-only trade
+     2025-02-27 20:00:00  python-only trade
+     2025-02-28 21:00:00  python-only trade
+     2025-03-21 07:00:00  python-only trade
+     2025-03-26 16:00:00  python-only trade
+     2025-04-04 12:00:00  python-only trade
+     2025-04-07 01:00:00  python-only trade
+     2025-04-07 19:00:00  python-only trade
+
+-- 3. headline figures --------------------------------------------------
+                                  python            mt5
+   trades                       116.0000        42.0000
+   net profit                    -0.9088         9.8600
+   win rate %                    42.2414        45.2400
+   profit factor                  0.9960         1.1300
+   sharpe                        -0.0197         1.0500
+   max DD %                       0.3625         0.2800
+
+==========================================================================
+  VERDICT: FAIL
+  Do NOT trust Python-only results yet. Fix indicators first,
+  then re-check trades.
+==========================================================================

@@ -1,0 +1,256 @@
+//@version=5
+// ─────────────────────────────────────────────────────────────────────────────
+// Scalp_Gold_M1 — corrected Pine v5 implementation
+// XAUUSD / 1-minute
+//
+// Design:
+//   • Signal is evaluated only at the M1 close.
+//   • Market entry fills at the next available bar open.
+//   • SL distance is frozen from the SIGNAL bar, but the SL PRICE is anchored
+//     to the ACTUAL fill price. calc_on_order_fills=true is used for this.
+//   • The signal-bar ATR is stored per entry, so the post-fill calculation does
+//     not use future/current-bar ATR data.
+//   • H1 trend uses the LAST CLOSED H1 EMA only.
+//   • MaxPositions is enforced by open-trade count and same-bar fill blocking.
+//   • Trailing uses the best intrabar price of each CLOSED M1 bar (high for long,
+//     low for short), then submits the new stop after that bar closes.
+//   • Risk calculations use syminfo.pointvalue. For an XAUUSD feed quoted as
+//     1 USD P/L per 1 oz per $1 move, this is 1.0.
+//
+// Important:
+//   FixedLossUSD is a TARGET for a stop filled at its stop price. It is NOT a
+//   hard loss cap. A gap/slippage through the stop can still produce a larger
+//   realized loss.
+// ─────────────────────────────────────────────────────────────────────────────
+strategy("Scalp Gold M1 (BB mean-reversion) — corrected",
+     overlay = true,
+     pyramiding = 20,
+     default_qty_type = strategy.fixed,
+     default_qty_value = 1,
+     initial_capital = 10000,
+     currency = currency.USD,
+     calc_on_every_tick = false,
+     calc_on_order_fills = true,
+     process_orders_on_close = false,
+     commission_type = strategy.commission.cash_per_contract,
+     commission_value = 0.0,
+     slippage = 0,
+     close_entries_rule = "ANY",
+     use_bar_magnifier = true)
+
+// ── Inputs ───────────────────────────────────────────────────────────────────
+FixedLossUSD     = input.float(5.0, "Target loss at SL (USD, gap risk not bounded)", group="Risk", step=0.5, minval=0.0)
+TrailStartUSD    = input.float(3.0, "Start trailing once peak profit ≥ USD", group="Risk", step=0.5, minval=0.0)
+TrailStepUSD     = input.float(1.0, "Lock (peak − step) USD after activation", group="Risk", step=0.5, minval=0.0)
+AtrMultSL        = input.float(3.0, "SL distance = ATR × this", group="Risk", step=0.1, minval=0.1)
+MinSlTicks       = input.int(50, "SL floor in ticks", group="Risk", minval=1)
+QtyStep          = input.float(1.0, "Quantity step (units/oz)", group="Risk", step=0.01, minval=0.01)
+MinQty           = input.float(1.0, "Minimum quantity (units/oz)", group="Risk", step=0.01, minval=0.01)
+BBPeriod         = input.int(14, "Bollinger period (M1)", group="Signal", minval=2)
+BBDeviation      = input.float(1.0, "Bollinger std-dev multiplier", group="Signal", step=0.1, minval=0.1)
+AtrPeriod        = input.int(14, "ATR period (M1)", group="Signal", minval=2)
+CooldownSec      = input.int(5, "Cooldown after close (sec)", group="Signal", minval=0)
+BBMeanReversion  = input.bool(true, "Mean-reversion (pullback to band)", group="Signal")
+MaxPositions     = input.int(1, "Max concurrent positions (pyramiding)", group="Signal", minval=1, maxval=20)
+UseH1Trend       = input.bool(true, "Only trade with H1 EMA direction", group="Filters")
+H1TrendPeriod    = input.int(50, "H1 EMA period", group="Filters", minval=2)
+UseVolFilter     = input.bool(true, "Skip when ATR/price < MinAtrPct", group="Filters")
+MinAtrPct        = input.float(0.015, "Minimum ATR as % of price", group="Filters", step=0.005, minval=0.0)
+UseSessionFilter = input.bool(true, "Trade only during session", group="Filters")
+SessionStartUTC  = input.int(13, "Session start hour (UTC, inclusive)", group="Filters", minval=0, maxval=23)
+SessionEndUTC    = input.int(21, "Session end hour (UTC, exclusive)", group="Filters", minval=0, maxval=23)
+UseBlackout      = input.bool(true, "Skip during US data-release blackouts", group="Filters")
+BlackoutsUTC     = input.string("12:25-13:30,13:55-14:10,17:55-19:30", "Blackout windows (UTC, comma-separated HH:MM-HH:MM)", group="Filters")
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+parseBlackoutsToMin(string s) =>
+    arr = array.new<int>()
+    if not na(s) and str.length(s) > 0
+        ranges = str.split(s, ",")
+        n = array.size(ranges)
+        if n > 0
+            for i = 0 to n - 1
+                rr = str.replace_all(array.get(ranges, i), " ", "")
+                parts = str.split(rr, "-")
+                if array.size(parts) == 2
+                    sp = str.split(array.get(parts, 0), ":")
+                    ep = str.split(array.get(parts, 1), ":")
+                    if array.size(sp) == 2 and array.size(ep) == 2
+                        sh = str.tonumber(array.get(sp, 0))
+                        sm = str.tonumber(array.get(sp, 1))
+                        eh = str.tonumber(array.get(ep, 0))
+                        em = str.tonumber(array.get(ep, 1))
+                        if not na(sh) and not na(sm) and not na(eh) and not na(em) and sh >= 0 and sh <= 23 and eh >= 0 and eh <= 23 and sm >= 0 and sm <= 59 and em >= 0 and em <= 59
+                            array.push(arr, int(sh) * 60 + int(sm))
+                            array.push(arr, int(eh) * 60 + int(em))
+    arr
+
+inHourWindow(int h, int startH, int endH) =>
+    startH == endH ? true : startH < endH ? (h >= startH and h < endH) : (h >= startH or h < endH)
+
+// ── Indicators ───────────────────────────────────────────────────────────────
+bbBasis = ta.sma(close, BBPeriod)
+bbDev   = BBDeviation * ta.stdev(close, BBPeriod)
+bbUpper = bbBasis + bbDev
+bbLower = bbBasis - bbDev
+atrM1   = ta.atr(AtrPeriod)
+
+// Always use the EMA belonging to the previous, fully closed H1 bar.
+// The [1] is inside request.security(), and lookahead_on makes that confirmed
+// HTF value available consistently across all M1 bars belonging to the next H1.
+h1Ema = request.security(syminfo.tickerid, "60", ta.ema(close, H1TrendPeriod)[1], lookahead=barmerge.lookahead_on)
+
+// ── Signal ───────────────────────────────────────────────────────────────────
+crossUp = BBMeanReversion ?
+     (close < bbLower and close[1] >= bbLower[1]) :
+     (close > bbUpper and close[1] <= bbUpper[1])
+
+crossDown = BBMeanReversion ?
+     (close > bbUpper and close[1] <= bbUpper[1]) :
+     (close < bbLower and close[1] >= bbLower[1])
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+volOK = not UseVolFilter or (close > 0 and (atrM1 / close) * 100.0 >= MinAtrPct)
+uptrend = not UseH1Trend or close > h1Ema
+downtrend = not UseH1Trend or close < h1Ema
+
+hUtc = hour(time, "UTC")
+minOfDay = hUtc * 60 + minute(time, "UTC")
+inSession = not UseSessionFilter or inHourWindow(hUtc, SessionStartUTC, SessionEndUTC)
+
+var array<int> blackoutMins = parseBlackoutsToMin(BlackoutsUTC)
+inBlackout = false
+if UseBlackout
+    bz = array.size(blackoutMins)
+    if bz >= 2
+        bi = 0
+        while bi < bz - 1 and not inBlackout
+            bs = array.get(blackoutMins, bi)
+            be = array.get(blackoutMins, bi + 1)
+            inBlackout := bs <= be ? (minOfDay >= bs and minOfDay < be) : (minOfDay >= bs or minOfDay < be)
+            bi += 2
+
+// ── Cooldown ─────────────────────────────────────────────────────────────────
+var int lastCloseTime = 0
+if strategy.closedtrades > 0
+    t = strategy.closedtrades.exit_time(strategy.closedtrades - 1)
+    if t > lastCloseTime
+        lastCloseTime := t
+inCooldown = lastCloseTime > 0 and time - lastCloseTime < CooldownSec * 1000
+
+// ── Position sizing ──────────────────────────────────────────────────────────
+// Risk per unit = price distance × syminfo.pointvalue.
+// For a typical XAUUSD CFD where 1 oz × $1 move = $1, pointvalue = 1.
+tickSize = syminfo.mintick
+slFloor = MinSlTicks * tickSize
+slDistSignal = math.max(AtrMultSL * atrM1, slFloor)
+riskPerUnit = slDistSignal * syminfo.pointvalue
+rawQty = riskPerUnit > 0 ? FixedLossUSD / riskPerUnit : 0.0
+qtyUnits = math.floor(rawQty / QtyStep) * QtyStep
+canSize = qtyUnits >= MinQty
+
+// ── Per-entry state ──────────────────────────────────────────────────────────
+var int tradeSeq = 0
+var int lastSignalBar = na
+var int lastFillBar = na
+var int prevOpenTrades = 0
+var int prevClosedTrades = 0
+
+// Stored at signal time. These values are NOT recomputed after the entry fills.
+var map<string, float> slDistMap = map.new<string, float>()
+var map<string, float> stopMap = map.new<string, float>()
+var map<string, float> peakMap = map.new<string, float>()
+
+// A fill-triggered recalculation must never create another entry based on the
+// current historical bar's OHLC. Detect fills and block entries for that bar.
+fillEvent = strategy.opentrades != prevOpenTrades or strategy.closedtrades != prevClosedTrades
+if fillEvent
+    lastFillBar := bar_index
+prevOpenTrades := strategy.opentrades
+prevClosedTrades := strategy.closedtrades
+
+// Only the normal bar-close execution is allowed to generate a new signal.
+// Because historical bars are always confirmed, lastSignalBar/lastFillBar are
+// used to prevent extra entries caused by calc_on_order_fills.
+canSignalThisBar = barstate.isconfirmed and lastSignalBar != bar_index and lastFillBar != bar_index
+canEnter = canSignalThisBar and not inCooldown and canSize and volOK and inSession and not inBlackout and strategy.opentrades < MaxPositions and atrM1 > 0
+
+longSig = canEnter and crossUp and uptrend
+shortSig = canEnter and crossDown and downtrend
+
+if longSig
+    tradeSeq += 1
+    eid = "L" + str.tostring(tradeSeq)
+    lastSignalBar := bar_index
+    strategy.entry(eid, strategy.long, qty=qtyUnits, comment="M1 scalp up")
+    map.put(slDistMap, eid, slDistSignal)
+
+if shortSig
+    tradeSeq += 1
+    eid = "S" + str.tostring(tradeSeq)
+    lastSignalBar := bar_index
+    strategy.entry(eid, strategy.short, qty=qtyUnits, comment="M1 scalp down")
+    map.put(slDistMap, eid, slDistSignal)
+
+// ── Initial SL + per-position trailing ───────────────────────────────────────
+if strategy.opentrades > 0
+    for i = 0 to strategy.opentrades - 1
+        eid = strategy.opentrades.entry_id(i)
+        entryPrice = strategy.opentrades.entry_price(i)
+        size = strategy.opentrades.size(i)
+        absSize = math.abs(size)
+        isLong = size > 0
+
+        if absSize > 0 and map.contains(slDistMap, eid)
+            dist = map.get(slDistMap, eid)
+
+            // Initialize state from the ACTUAL fill price.
+            if not map.contains(stopMap, eid)
+                initSL = isLong ? entryPrice - dist : entryPrice + dist
+                map.put(stopMap, eid, initSL)
+                map.put(peakMap, eid, entryPrice)
+                strategy.exit(eid + "_x", from_entry=eid, stop=initSL, comment="SL")
+
+            // Update peak using only the now-closed M1 bar's OHLC.
+            prevPeak = map.get(peakMap, eid)
+            newPeak = isLong ? math.max(prevPeak, high) : math.min(prevPeak, low)
+            map.put(peakMap, eid, newPeak)
+
+            peakProfitPrice = isLong ? (newPeak - entryPrice) : (entryPrice - newPeak)
+            peakProfitUSD = peakProfitPrice * absSize * syminfo.pointvalue
+
+            if peakProfitUSD >= TrailStartUSD and TrailStepUSD >= 0
+                lockUSD = math.max(peakProfitUSD - TrailStepUSD, 0.0)
+                lockDelta = absSize * syminfo.pointvalue > 0 ? lockUSD / (absSize * syminfo.pointvalue) : 0.0
+                newSL = isLong ? entryPrice + lockDelta : entryPrice - lockDelta
+                prevSL = map.get(stopMap, eid)
+                moveOK = isLong ? newSL > prevSL : newSL < prevSL
+                beyondEntry = isLong ? newSL > entryPrice : newSL < entryPrice
+
+                if moveOK and beyondEntry
+                    map.put(stopMap, eid, newSL)
+                    strategy.exit(eid + "_x", from_entry=eid, stop=newSL, comment="TSL")
+
+// ── State cleanup ────────────────────────────────────────────────────────────
+if strategy.closedtrades > 0
+    lastClosedIndex = strategy.closedtrades - 1
+    closedId = strategy.closedtrades.entry_id(lastClosedIndex)
+    map.remove(slDistMap, closedId)
+    map.remove(stopMap, closedId)
+    map.remove(peakMap, closedId)
+
+// ── Diagnostics ──────────────────────────────────────────────────────────────
+plot(bbBasis, "BB basis", color=color.orange)
+plot(bbUpper, "BB upper", color=color.blue)
+plot(bbLower, "BB lower", color=color.blue)
+plot(UseH1Trend ? h1Ema : na, "Last closed H1 EMA", color=color.red)
+bgcolor(UseSessionFilter and not inSession ? color.new(color.gray, 92) : na, title="Out-of-session shade")
+bgcolor(UseBlackout and inBlackout ? color.new(color.red, 88) : na, title="Blackout shade")
+
+// Display a warning if the chart's point value differs from the XAUUSD
+// assumption of $1 per price-unit per unit/oz.
+var label pointValueLabel = na
+if barstate.islast
+    if not na(pointValueLabel)
+        label.delete(pointValueLabel)
+    pointValueLabel := label.new(bar_index, high, "pointvalue=" + str.tostring(syminfo.pointvalue), style=label.style_label_down, textcolor=color.white, color=color.gray)

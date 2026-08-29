@@ -1,0 +1,58 @@
+==========================================================================
+  RECONCILIATION  ScalpGoldM1
+==========================================================================
+
+-- 1. indicators (bar by bar) --------------------------------------------
+   bars compared : 61608
+   indicator               n   max_abs_diff   max_rel_diff    n_bad  verdict
+   bb_basis            61608      4.457e-11      1.110e-14        0  MATCH
+   bb_dev              61608      5.000e-11      2.161e-10        0  MATCH
+   bb_upper            61608      5.002e-11      1.260e-14        0  MATCH
+   bb_lower            61608      5.002e-11      1.261e-14        0  MATCH
+   atr                 61608      5.000e-11      1.037e-10        0  MATCH
+   h1_ema              61608      5.002e-11      1.238e-14        0  MATCH
+   sig_long            61608      0.000e+00      0.000e+00        0  MATCH
+   sig_short           61608      0.000e+00      0.000e+00        0  MATCH
+   => PASS (0/8 indicators diverge)
+
+-- 2. trades -------------------------------------------------------------
+   python : 178 trades
+   mt5    : 178 trades
+   MATCH       178
+   exact match rate : 100.0%
+   net move python  : +16.76000
+   net move mt5     : +16.76000
+   difference       : +0.00000
+
+-- 2b. where the money went ----------------------------------------------
+   The Python engine prices movement only; MT5 also books
+   swap and commission.  Gross must match, costs explain the rest.
+   gross P/L from price (mt5) :     +14.28
+   swap                       :      -3.86
+   commission                 :     -14.60
+   ------------------------------------------
+   MT5 booked net             :      -4.18
+
+   Calibrated cost model - paste into the strategy spec:
+
+       costs=Costs(
+           commission_per_lot=7.93,
+           swap_long_per_lot_night=-77.71,
+           swap_short_per_lot_night=23.40,
+       ),
+
+   (40 weighted rollovers over 178 trades)
+
+-- 3. headline figures --------------------------------------------------
+                                  python            mt5
+   trades                       178.0000       178.0000
+   net profit                    -4.1706        -4.1800
+   win rate %                    52.8090        53.3700
+   profit factor                  0.9875         0.9900
+   sharpe                        -0.0787        -0.7400
+   max DD %                       0.5748         0.5900
+
+==========================================================================
+  VERDICT: PASS
+  Python and MT5 agree - it is safe to iterate in Python alone.
+==========================================================================

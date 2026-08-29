@@ -1,0 +1,63 @@
+==========================================================================
+  RECONCILIATION  VolDip
+==========================================================================
+
+-- 1. indicators (bar by bar) --------------------------------------------
+   bars compared : 9807
+   indicator               n   max_abs_diff   max_rel_diff    n_bad  verdict
+   atr                  9807      4.286e-11      8.439e-08        0  MATCH
+   sma50                9807      8.882e-16      7.218e-16        0  MATCH
+   std50                9807      5.000e-11      5.565e-08        0  MATCH
+   bb_width             9807      5.000e-11      2.112e-08        0  MATCH
+   slope                9807      5.000e-11      1.000e+00        0  MATCH
+   sig_long             9807      0.000e+00      0.000e+00        0  MATCH
+   sig_short            9807      0.000e+00      0.000e+00        0  MATCH
+   => PASS (0/7 indicators diverge)
+
+-- 2. trades -------------------------------------------------------------
+   python : 17 trades
+   mt5    : 16 trades
+   MATCH        15
+   BOUNDARY      1
+   LOGIC         1
+   exact match rate : 88.2%
+   net move python  : +0.04219
+   net move mt5     : +0.03322
+   difference       : -0.00897
+
+-- 2b. where the money went ----------------------------------------------
+   The Python engine prices movement only; MT5 also books
+   swap and commission.  Gross must match, costs explain the rest.
+   gross P/L from price (mt5) :     +33.22
+   swap                       :      -0.60
+   commission                 :      -1.28
+   ------------------------------------------
+   MT5 booked net             :     +31.34
+
+   Calibrated cost model - paste into the strategy spec:
+
+       costs=Costs(
+           commission_per_lot=8.00,
+           swap_long_per_lot_night=-2.00,
+           swap_short_per_lot_night=-2.00,
+       ),
+
+   (30 weighted rollovers over 16 trades)
+
+   first 1 logic divergences:
+     2026-02-06 07:00:00  python-only trade
+
+-- 3. headline figures --------------------------------------------------
+                                  python            mt5
+   trades                        17.0000        16.0000
+   net profit                    40.1997        31.3400
+   win rate %                    58.8235        56.2500
+   profit factor                  1.9594         1.7400
+   sharpe                         1.2555         2.3000
+   max DD %                       0.1155         0.1200
+
+==========================================================================
+  VERDICT: FAIL
+  Do NOT trust Python-only results yet. Fix indicators first,
+  then re-check trades.
+==========================================================================

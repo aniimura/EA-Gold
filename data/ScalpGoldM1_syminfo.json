@@ -1,0 +1,12 @@
+{
+  "name": "GOLD",
+  "digits": 2,
+  "point": 0.01,
+  "trade_stops_level": 0,
+  "trade_freeze_level": 0,
+  "contract_size": 100.0,
+  "volume_min": 0.01,
+  "volume_step": 0.01,
+  "tick_size": 0.01,
+  "tick_value": 1.0
+}
