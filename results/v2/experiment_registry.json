@@ -19,8 +19,16 @@
       "name": "small_account_override_stress",
       "post_hoc": true,
       "diagnostic_only": true
+    },
+    {
+      "index": 724,
+      "name": "dd20_experiment",
+      "post_hoc": true,
+      "diagnostic_only": true,
+      "declared_limit": "max drawdown 20 %",
+      "note": "0.70 % target per sleeve, 2.00 % combined open-risk ceiling applied to every entry. Only this risk level was tested."
     }
   ],
   "note": "The profiles below were specified AFTER the 2022-2026 results were known. They are appended to the prior count, never substituted for it.",
-  "total_configurations_examined": 723
+  "total_configurations_examined": 724
 }

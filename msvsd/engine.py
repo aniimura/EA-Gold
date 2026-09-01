@@ -418,6 +418,7 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
                     override_max_risk_pct=cfg.override_max_risk_pct_per_sleeve,
                     max_total_open_risk_pct=cfg.max_total_open_risk_pct,
                     tick_size=cfg.tick_size, tick_value=cfg.tick_value,
+                    enforce_total_on_normal=cfg.enforce_total_open_risk_on_normal,
                     when=t[bar_i])
                 row = d.to_dict()
                 row["bar"] = bar_i

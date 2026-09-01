@@ -173,6 +173,7 @@ def decide(sleeve_name: str, direction: int, atr: float, atr_mult: float,
            override_max_risk_pct: float = 0.50,
            max_total_open_risk_pct: float = 1.00,
            tick_size: float = 0.0, tick_value: float = 0.0,
+           enforce_total_on_normal: bool = False,
            when=None) -> SizingDecision:
     """Size one prospective sleeve entry and decide whether it may be placed."""
     mpp = money_per_price_per_lot(contract_oz, tick_size, tick_value)
@@ -214,6 +215,13 @@ def decide(sleeve_name: str, direction: int, atr: float, atr_mult: float,
         after = before + d.actual_stop_risk
         d.total_open_risk_after = after
         d.total_open_risk_pct_after = (100.0 * after / equity) if equity > 0 else 0.0
+        # Off by default, so the published baseline is untouched: the portfolio
+        # ceiling normally gates only the override. When a profile asks for it,
+        # a normally-sized entry is refused on the same grounds.
+        if (enforce_total_on_normal
+                and d.total_open_risk_pct_after > max_total_open_risk_pct + 1e-9):
+            d.final_lots = 0.0
+            d.reason = REASON_PORTFOLIO_RISK
         return d
 
     # ---- below the minimum ------------------------------------------------

@@ -355,10 +355,49 @@ class TestProfiles(unittest.TestCase):
         self.assertAlmostEqual(cfg.max_total_open_risk_pct, 2.00)
 
     def test_the_target_is_never_the_cap(self):
-        for name in PROFILES:
+        """The OVERRIDE profiles must never let the permission cap become the
+        sizing target. `dd20_experiment` is excluded because it deliberately
+        moves the target itself (0.70 %) with the override switched off - a
+        different kind of change, not a cap being misread as a target."""
+        for name in ("baseline_strict", "small_account_override",
+                     "small_account_override_stress"):
             cfg = apply_profile(RunConfig(), name)
             self.assertAlmostEqual(cfg.effective_target_risk_pct(), 0.10,
                                    msg="%s moved the sizing target" % name)
+            self.assertGreater(cfg.override_max_risk_pct_per_sleeve,
+                               cfg.effective_target_risk_pct())
+
+    def test_dd20_experiment_profile(self):
+        cfg = apply_profile(RunConfig(), "dd20_experiment")
+        cfg.validate()
+        self.assertAlmostEqual(cfg.capital, 10000.0)
+        self.assertAlmostEqual(cfg.effective_target_risk_pct(), 0.70)
+        self.assertAlmostEqual(cfg.max_total_open_risk_pct, 2.00)
+        self.assertAlmostEqual(cfg.contract_oz, 100.0)
+        self.assertAlmostEqual(cfg.minimum_lot, 0.01)
+        self.assertAlmostEqual(cfg.lot_step, 0.01)
+        self.assertFalse(cfg.enable_min_lot_override)
+        self.assertTrue(cfg.enforce_total_open_risk_on_normal)
+        self.assertIn("DIAGNOSTIC_ONLY__NOT_RECOMMENDED", cfg.labels())
+
+    def test_normal_path_cap_is_off_unless_asked_for(self):
+        """The portfolio ceiling must not touch a normally-sized entry by
+        default - that is what keeps the published baseline reproducible."""
+        d = mk(equity=100000.0, stop_dist=32.5, sleeves=[
+            open_sleeve("slow", 1, 5.0, 1000.0)], total_cap=0.01)
+        self.assertEqual(d.reason, REASON_ACCEPT_NORMAL)
+        self.assertAlmostEqual(d.final_lots, 0.03)
+
+    def test_normal_path_cap_rejects_when_enabled(self):
+        d = decide(sleeve_name="fast", direction=1, atr=32.5 / 2.5, atr_mult=2.5,
+                   equity=100000.0, risk_cash=100.0, price=2000.0,
+                   contract_oz=100.0, lot_step=0.01, minimum_lot=0.01,
+                   costs=FREE, sleeves=[open_sleeve("slow", 1, 5.0, 1000.0)],
+                   enable_override=False, max_total_open_risk_pct=0.01,
+                   enforce_total_on_normal=True)
+        self.assertEqual(d.reason, REASON_PORTFOLIO_RISK)
+        self.assertEqual(d.final_lots, 0.0)
+        self.assertGreater(d.rounded_lots, 0.0)   # it WAS sizable; the cap refused it
 
     def test_rejects_a_portfolio_cap_below_the_sleeve_cap(self):
         with self.assertRaises(ValueError):

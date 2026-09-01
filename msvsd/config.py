@@ -98,6 +98,10 @@ class RunConfig:
     target_risk_pct_per_sleeve: Optional[float] = None   # None -> follow risk_pct
     override_max_risk_pct_per_sleeve: float = 0.50
     max_total_open_risk_pct: float = 1.00
+    # The portfolio cap normally gates the OVERRIDE path only, so that a run
+    # with the override off is bit-identical to the published baseline. Set
+    # this to apply it to normally-sized entries as well.
+    enforce_total_open_risk_on_normal: bool = False
     stop_exit_slippage_points: float = BASELINE_SLIPPAGE_POINTS
 
     # ---- strategy --------------------------------------------------------
@@ -257,6 +261,9 @@ class RunConfig:
             out.append("V1_COMPAT__REPRODUCES_KNOWN_DEFECTS")
         if self.n_configs_tested > 1:
             out.append("MULTIPLE_TESTING__%d_CONFIGS" % self.n_configs_tested)
+        if self.enforce_total_open_risk_on_normal:
+            out.append("TOTAL_OPEN_RISK_CAP_ON_ALL_ENTRIES__%.2fPCT"
+                       % self.max_total_open_risk_pct)
         if self.enable_min_lot_override:
             out.append("MIN_LOT_OVERRIDE__SLEEVE_%.2fPCT_TOTAL_%.2fPCT"
                        % (self.override_max_risk_pct_per_sleeve,
@@ -309,6 +316,23 @@ PROFILES: Dict[str, Dict] = {
         "override_max_risk_pct_per_sleeve": 0.50,
         "max_total_open_risk_pct": 1.00,
     },
+    "dd20_experiment": {
+        "_doc": "POST-HOC EXPERIMENT 724. $10,000 at a 0.70 % target per sleeve "
+                "with a 2.00 % combined open-stop-risk ceiling that applies to "
+                "EVERY entry, not just override ones. The minimum-lot override "
+                "is OFF, so an undersized position is skipped as usual. Declared "
+                "acceptance limit: 20 % maximum drawdown. Diagnostic only.",
+        "capital": 10000.0,
+        "risk_pct": 0.70,
+        "target_risk_pct_per_sleeve": 0.70,
+        "enable_min_lot_override": False,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "contract_oz": 100.0,
+        "max_total_open_risk_pct": 2.00,
+        "override_max_risk_pct_per_sleeve": 2.00,
+        "enforce_total_open_risk_on_normal": True,
+    },
     "small_account_override_stress": {
         "_doc": "DIAGNOSTIC ONLY - NOT RECOMMENDED. Same as "
                 "small_account_override with the permission caps doubled to "
@@ -325,7 +349,7 @@ PROFILES: Dict[str, Dict] = {
         "max_total_open_risk_pct": 2.00,
     },
 }
-DIAGNOSTIC_PROFILES = ("small_account_override_stress",)
+DIAGNOSTIC_PROFILES = ("small_account_override_stress", "dd20_experiment")
 
 
 def apply_profile(cfg: "RunConfig", name: str) -> "RunConfig":

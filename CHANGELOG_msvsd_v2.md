@@ -608,3 +608,102 @@ accepted position is the same 0.01 lot: one distinct size, `corr(size, 1/ATR)`
 cap silently converts into an ATR ceiling that selects which trades are taken.
 Nothing breaches a limit and the platforms agree, so it is not *unacceptable* -
 but it is no longer the strategy that was tested.
+
+---
+
+## Post-hoc experiment 724: `dd20_experiment`
+
+$10,000, 0.70 % target per sleeve, 2.00 % combined open-stop-risk ceiling
+applied to **every** entry, minimum-lot override off, declared acceptance limit
+20 % maximum drawdown. Only this one risk level was tested; no nearby values
+were searched. Entry signals, Donchian periods, ATR, stop distance, exits,
+direction rules and cost assumptions are unchanged.
+
+### Implementation note
+
+The portfolio ceiling previously gated only the minimum-lot override path, so
+with the override off it would never have fired. A new flag,
+`enforce_total_open_risk_on_normal`, applies it to normally-sized entries as
+well. It is **off by default**, which is what keeps the published baseline
+bit-identical; only this profile turns it on.
+
+### Baseline verification
+
+Both runs use the same final engine (M1 stop replay, pre-fill carry, Pine
+Friday basis). The control reproduces the published figures exactly:
+
+| | published | reproduced |
+|---|---:|---:|
+| Net profit | ~$2,702 | **$2,701.64** |
+| Total return | ~2.70 % | **2.7016 %** |
+| Max drawdown | ~2.65 % | **2.6531 %** |
+
+### Results
+
+| Metric | `baseline_strict` | `dd20_experiment` |
+|---|---:|---:|
+| Starting / ending equity | 100,000 / 102,701.64 | 10,000 / 10,928.04 |
+| Net profit | 2,701.64 | **928.04** |
+| Total return | +2.70 % | **+9.28 %** |
+| CAGR | 0.574 % | 1.924 % |
+| Max drawdown | 2,778.97 / 2.65 % | 1,561.30 / **14.75 %** |
+| Annualised volatility | 2.04 % | 8.92 % |
+| Sharpe / Sortino / Calmar | 0.282 / 0.272 / 0.216 | **0.217** / 0.250 / 0.130 |
+| Signals / trades / campaigns | 369 / 301 / 120 | 727 / 208 / 107 |
+| Avg / max risk per trade | 0.085 / 0.103 % | 0.549 / **0.712 %** |
+| Avg / MAX combined open risk | 0.275 / 2.889 % | 0.805 / **1.989 %** |
+| Distinct sizes, corr(size,1/ATR) | 7, +0.979 | 4, **+0.932** |
+| Gross profit | 5,275.86 | 2,322.60 |
+| Spread+slip / commission / swap | −228.08 / −64.64 / −2,281.50 | −104.50 / −29.44 / −1,040.38 |
+| Top-5 campaign share | 287.8 % | **315.8 %** |
+| Net excluding top 5 | −5,076.11 | **−2,516.49** |
+| P(mean campaign <= 0) | 0.285 | 0.314 |
+
+Campaign bootstrap: mean **+$10.90**, 95 % **[−25.49, +54.50]**, P(mean<=0)
+**0.314**, n = 107. Monthly blocks P = 0.297 (56 blocks); quarterly P = 0.254
+(19 blocks).
+
+Year by year: 2022 −10.79 %, 2023 +8.83 %, 2024 −1.05 %, 2025 +13.76 %,
+2026 **0.00 % on zero trades**.
+
+Direction: long 120 trades +3,811.96 (mean +0.716R); short 88 trades −1,489.37
+(mean −0.370R). Sleeves: fast 115 / +300.65 / +0.045R, medium 68 / +1,196.18 /
++0.422R, slow 25 / +825.77 / +0.783R.
+
+### Verdict: FAILED
+
+| Condition | Limit | Observed | |
+|---|---|---|---|
+| Max drawdown | <= 20 % | 14.75 % | ok |
+| Combined open risk | <= 2.00 % | 1.989 % | ok |
+| Volatility scaling | corr >= 0.50, >1 size | +0.93, 4 sizes | ok |
+| Top-5 dependence | net positive without them | 315.8 %, −$2,516.49 | **FAILED** |
+| Risk-adjusted vs control | Sharpe >= 75 % | 0.217 vs 0.282 (77 %) | ok (narrowly) |
+
+Four of five conditions pass. The 2.00 % ceiling is real and binding - the
+control, which has no such ceiling, peaks at 2.889 %. Volatility scaling
+survives here, unlike under the minimum-lot override.
+
+**Fairness note:** the control fails the same top-5 test (287.8 %,
+−$5,076.11), so this condition does not discriminate between the two. It says
+the underlying strategy is concentration-dependent at any risk level, which
+earlier sections already established.
+
+### The finding that matters more than the drawdown
+
+At 0.70 % on roughly $10,000 a 0.01 lot is affordable only while
+**ATR <= 27.82**. Gold's median ATR was 25.47 in 2025 and 41.61 in 2026, so:
+
+| Year | Signals | Median ATR | Unsizable | % |
+|---|---:|---:|---:|---:|
+| 2022 | 44 | 11.65 | 0 | 0.0 % |
+| 2023 | 126 | 9.00 | 0 | 0.0 % |
+| 2024 | 128 | 12.26 | 0 | 0.0 % |
+| 2025 | 207 | 25.47 | 81 | 39.1 % |
+| 2026 | 222 | 41.61 | **222** | **100.0 %** |
+
+**The account sat flat for the whole of 2026.** The 14.75 % drawdown is
+therefore partly achieved by not participating in the most volatile stretch of
+the record rather than by surviving it. This is the same discretisation lockout
+that leaves a $10,000 account with zero trades at 0.10 %; raising the target to
+0.70 % moves the threshold, it does not remove it.

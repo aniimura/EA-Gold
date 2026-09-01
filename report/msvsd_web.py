@@ -232,6 +232,12 @@ def collect():
             if os.path.isfile(fp):
                 with open(fp, encoding="utf-8") as fh:
                     d["override"][key] = json.load(fh)
+
+    # ---- post-hoc experiment 724 -----------------------------------------
+    dp = os.path.join(RES, "dd20_audit.json")
+    if os.path.isfile(dp):
+        with open(dp, encoding="utf-8") as fh:
+            d["dd20"] = json.load(fh)
     return d
 
 
@@ -830,6 +836,141 @@ function table(head,rows){
   s.appendChild(cl);
 })();
 
+/* ---- 6c. 20 % drawdown experiment (post-hoc 724) ---- */
+(function(){
+  if(!D.dd20) return;
+  const Z=D.dd20, B=Z.baseline, E=Z.experiment, V=Z.verdict;
+  const f2=(v,d)=>v==null?'—':(+v).toFixed(d==null?2:d);
+  const pc=(v,d)=>v==null?'—':sg(v,d==null?2:d)+'%';
+  const NB=' ';
+  const s=sec('Post-hoc experiment 724','20% Drawdown Experiment',
+    'A single predeclared risk profile: $10,000 at a 0.70 % target per sleeve with a '+
+    '2.00 % combined open-stop-risk ceiling applied to every entry, the minimum-lot '+
+    'override off, and a declared acceptance limit of 20 % maximum drawdown. Only this '+
+    'one risk level was tested — no nearby values were searched.');
+
+  const w=document.createElement('div'); w.className='callout warn';
+  w.innerHTML='<p><strong>All results below remain in-sample and are not evidence of a '+
+   'validated edge.</strong></p><ul style="margin:0">'+
+   '<li>This profile was specified <strong>after</strong> the 2022–2026 results were '+
+   'known. It is registered as <strong>post-hoc experiment 724</strong>, appended behind '+
+   'the 720 grid cells and the three override profiles. The multiple-testing count carries '+
+   'forward and is not reset.</li>'+
+   '<li>The strategy still has <strong>no genuine out-of-sample confirmation</strong>.</li>'+
+   '<li>Entry signals, Donchian periods, ATR, stop distance, exits, direction rules and '+
+   'cost assumptions are <strong>unchanged</strong>. Only the risk profile differs.</li>'+
+   '<li><span class=mono>baseline_strict</span> remains the research control; both runs use '+
+   'the same final engine (M1 stop replay, corrected carry timing, Pine Friday basis).</li>'+
+   '</ul>';
+  s.appendChild(w);
+
+  const rows=[['Starting equity',b=>money(b.starting_equity)],
+    ['Ending equity',b=>money(b.ending_equity)],
+    ['Net profit',b=>money(b.net_profit)],['Total return',b=>pc(b.return_pct)],
+    ['CAGR',b=>f2(b.cagr_pct,3)+'%'],
+    ['Max drawdown USD',b=>money(b.max_dd_usd)],['Max drawdown %',b=>f2(b.max_dd_pct)+'%'],
+    ['Annualised volatility',b=>f2(b.ann_vol_pct)+'%'],
+    ['Sharpe (autocorr-adj.)',b=>f2(b.sharpe,3)],['Sortino',b=>f2(b.sortino,3)],
+    ['Calmar',b=>f2(b.calmar,3)],['Exposure',b=>f2(b.exposure_pct,1)+'%'],
+    ['Signals evaluated',b=>f0(b.signals)],['Executed trades',b=>f0(b.trades)],
+    ['Independent campaigns',b=>f0(b.campaigns)],
+    ['Avg risk / trade',b=>f2(b.avg_risk_pct,3)+'%'],
+    ['Max risk / trade',b=>f2(b.max_risk_pct,3)+'%'],
+    ['Avg combined open risk',b=>f2(b.avg_total_open_risk_pct,3)+'%'],
+    ['MAX combined open risk',b=>f2(b.max_total_open_risk_pct,3)+'%'],
+    ['Distinct position sizes',b=>f0(b.distinct_sizes)],
+    ['corr(size, 1/ATR)',b=>b.corr_size_inv_atr==null?'—':sg(b.corr_size_inv_atr,3)],
+    ['Gross profit',b=>money(b.gross_profit)],
+    ['Spread + slippage',b=>money(-b.cost_spread_slip)],
+    ['Commission',b=>money(-b.cost_commission)],['Swap',b=>money(b.cost_swap)],
+    ['Top-5 campaign share',b=>f2(b.top5_share_pct,1)+'%'],
+    ['Net excluding top 5',b=>money(b.excl_top5_total)],
+    ['P(mean campaign ≤ 0)',b=>f2(b.p_mean_campaign_le_zero,3)]];
+  card(s,'dd20_experiment against the control','same engine; only the risk profile differs',
+    table(['Metric','baseline_strict (control)','dd20_experiment'],
+      rows.map(function(r){
+        var hi=(r[0].indexOf('MAX')===0||r[0].indexOf('Max drawdown %')===0);
+        return {cls:hi?'hi':'',c:[{v:r[0]},{v:r[1](B)},{v:r[1](E)}]};})));
+
+  card(s,'Acceptance conditions','classified on risk behaviour, not on return',
+    table(['Condition','Limit','Observed','Verdict'],
+      V.checks.map(function(c){return {cls:c.failed?'hi':'',c:[
+        {v:c.id.replace(/_/g,' ')},{v:c.limit},{v:c.observed},
+        {v:c.failed?'<strong>FAILED</strong>':'ok',k:c.failed?'neg':'pos'}]};})));
+
+  const vd=document.createElement('div'); vd.className='callout warn';
+  vd.innerHTML='<div class=eyebrow style="color:var(--neg)">Result</div>'+
+   '<p style="font-size:17px"><strong>Experiment '+V.verdict+'</strong> — on '+
+   V.failed_conditions.length+' of the five declared conditions: <span class=mono>'+
+   V.failed_conditions.join(', ')+'</span>.</p>'+
+   '<p>Drawdown stayed inside the 20 % limit at '+f2(E.max_dd_pct)+NB+'%, the 2.00 % '+
+   'combined-open-risk ceiling held at a peak of '+f2(E.max_total_open_risk_pct,3)+NB+'% '+
+   '(the control, which has no such ceiling, reaches '+f2(B.max_total_open_risk_pct,3)+
+   NB+'%), and volatility scaling survived — '+f0(E.distinct_sizes)+
+   ' distinct sizes with <span class=mono>corr(size, 1/ATR) = '+sg(E.corr_size_inv_atr,3)+
+   '</span>. Risk-adjusted performance fell to '+f2(E.sharpe,3)+' against the control’s '+
+   f2(B.sharpe,3)+', which clears the 75 % threshold only narrowly.</p>'+
+   '<p><strong>It fails on campaign concentration.</strong> The five largest campaigns are '+
+   f2(E.top5_share_pct,1)+NB+'% of net profit, and removing them leaves '+
+   money(E.excl_top5_total)+'. In fairness the control fails the same test '+
+   '('+f2(B.top5_share_pct,1)+NB+'%, '+money(B.excl_top5_total)+'), so this condition does '+
+   'not separate the two — it says the underlying strategy is concentration-dependent '+
+   'at any risk level, which earlier sections already established.</p>';
+  s.appendChild(vd);
+
+  if(E.sizing_lockout){
+    const L=E.sizing_lockout, by=L.by_year||{};
+    const yrs=Object.keys(by).sort();
+    card(s,'The account stops trading as volatility rises',
+      'signals whose 0.70 % size rounds below the 0.01 minimum are skipped, not taken smaller',
+      table(['Year','Signals','Median ATR','Unsizable','Unsizable %'],
+        yrs.map(function(y){var r=by[y];return {cls:r.unsizable_pct>50?'hi':'',c:[
+          {v:y},{v:f0(r.signals)},{v:f2(r.atr_median)},{v:f0(r.unsizable)},
+          {v:f2(r.unsizable_pct,1)+'%',k:r.unsizable_pct>50?'neg':''}]};})));
+    const lk=document.createElement('div'); lk.className='callout warn';
+    lk.innerHTML='<p><strong>The most important number in this experiment is not the '+
+     'drawdown.</strong> At 0.70 % on roughly $10,000, one 0.01 lot can only be afforded '+
+     'while <span class=mono>ATR ≤ '+f2(L.lockout_atr_threshold)+'</span>. Gold’s '+
+     'median ATR reached '+f2((by['2025']||{}).atr_median)+' in 2025 and '+
+     f2((by['2026']||{}).atr_median)+' in 2026, so <strong>100 % of 2026 signals were '+
+     'unsizable and the account sat flat for the entire year</strong>.</p>'+
+     '<p>The 14.75 % drawdown is therefore partly achieved by <em>not participating</em> in '+
+     'the most volatile stretch of the record, rather than by riding through it. This is the '+
+     'same discretisation lockout that leaves a $10,000 account with zero trades at 0.10 % — '+
+     'raising the target to 0.70 % moves the threshold, it does not remove it.</p>';
+    s.appendChild(lk);
+  }
+
+  card(s,'Year by year — dd20_experiment','',
+    table(['Year','Return','Max DD','Trades','Campaigns'],
+      (E.yearly||[]).filter(function(y){return y.year>2021;}).map(function(y){
+        return {c:[{v:y.year},{v:pc(y.return_pct),k:cls(y.return_pct)},
+          {v:f2(y.max_dd_pct)+'%'},{v:f0(y.trades)},{v:f0(y.campaigns)}]};})));
+
+  const dr=[];
+  ['long','short'].forEach(function(k){var v=(E.by_direction||{})[k];
+    if(v) dr.push({c:[{v:k},{v:f0(v.trades)},{v:money(v.gross),k:cls(v.gross)},
+      {v:f2(v.win_pct,1)+'%'},{v:sg(v.mean_R,3),k:cls(v.mean_R)}]});});
+  ['fast','medium','slow'].forEach(function(k){var v=(E.by_sleeve||{})[k];
+    if(v) dr.push({c:[{v:k+' sleeve'},{v:f0(v.trades)},{v:money(v.gross),k:cls(v.gross)},
+      {v:f2(v.win_pct,1)+'%'},{v:sg(v.mean_R,3),k:cls(v.mean_R)}]});});
+  card(s,'Direction and sleeve breakdown — dd20_experiment','',
+    table(['Group','Trades','Gross','Win rate','Mean R'],dr));
+
+  const cb=E.campaign_bootstrap_usd||{}, bm=E.block_monthly||{}, bq=E.block_quarterly||{};
+  card(s,'Evidence — dd20_experiment','campaigns are the unit; trades overlap',
+    table(['Test','Point estimate','95 % interval','P(mean ≤ 0)','Observations'],[
+      {cls:'hi',c:[{v:'Campaign bootstrap (USD)'},{v:money(cb.point_estimate)},
+        {v:money(cb.ci95?cb.ci95[0]:null)+' … '+money(cb.ci95?cb.ci95[1]:null)},
+        {v:f2(cb.p_mean_le_zero,3),k:'neg'},{v:f0(cb.effective_observations)}]},
+      {c:[{v:'Monthly block bootstrap'},{v:f2(bm.point_estimate,6)},
+        {v:f2(bm.ci95?bm.ci95[0]:null,6)+' … '+f2(bm.ci95?bm.ci95[1]:null,6)},
+        {v:f2(bm.p_mean_le_zero,3),k:'neg'},{v:f0(bm.effective_observations)}]},
+      {c:[{v:'Quarterly block bootstrap'},{v:f2(bq.point_estimate,6)},
+        {v:f2(bq.ci95?bq.ci95[0]:null,6)+' … '+f2(bq.ci95?bq.ci95[1]:null,6)},
+        {v:f2(bq.p_mean_le_zero,3),k:'neg'},{v:f0(bq.effective_observations)}]}]));
+})();
+
 /* ---- 7. limitations ---- */
 (function(){
   const s=sec('Caveats','What this test still does not tell you','');
@@ -847,10 +988,10 @@ function table(head,rows){
    'available — one FxPro rate pair was applied across 4.7 years.',
    '<strong>Entry timing is still H4.</strong> The M1 engine resolves protective stops only; '+
    'entries fill at the next H4 open by design.',
-   '<strong>'+(D.override?D.override.registry.total_configurations_examined:720)+' configurations have now been examined.</strong> '+
+   '<strong>'+(D.dd20?D.dd20.registry_index:(D.override?D.override.registry.total_configurations_examined:720))+' configurations have now been examined.</strong> '+
    'The 720-cell grid, plus three post-hoc profiles appended behind it. That count is recorded and fed to the Deflated Sharpe '+
    'calculation rather than quietly forgotten, and it is never reset. At 723 trials the Deflated Sharpe of the strict baseline is 0.47, of the override 0.32 — both far under '+
-   '0.95. The honest response to a search that finds nothing significant is to stop searching, not to search harder.'
+   '0.95, and experiment 724 fails one of its own five acceptance conditions. The honest response to a search that finds nothing significant is to stop searching, not to search harder.'
   ].map(x=>'<li>'+x+'</li>').join('')+'</ul></div>');
 })();
 
