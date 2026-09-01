@@ -27,6 +27,9 @@ BASELINE_ATR_LEN = 20
 BASELINE_ATR_MULT = 2.5
 BASELINE_CONTRACT_OZ = 100.0
 BASELINE_LOT_STEP = 0.01
+BASELINE_MINIMUM_LOT = 0.01               # FxPro GOLD SYMBOL_VOLUME_MIN
+BASELINE_TICK_SIZE = 0.01
+BASELINE_TICK_VALUE = 1.0                 # tick_value/tick_size == contract size
 BASELINE_MAX_NOTIONAL_X = 1.5
 BASELINE_CAPITAL = 100000.0
 BASELINE_FRIDAY_HOUR = 13                 # America/New_York
@@ -79,10 +82,23 @@ class RunConfig:
 
     # ---- account ---------------------------------------------------------
     capital: float = BASELINE_CAPITAL
-    risk_pct: float = BASELINE_RISK_PCT
+    risk_pct: float = BASELINE_RISK_PCT          # the normal target; never the cap
     contract_oz: float = BASELINE_CONTRACT_OZ
     lot_step: float = BASELINE_LOT_STEP
+    minimum_lot: float = BASELINE_MINIMUM_LOT    # broker SYMBOL_VOLUME_MIN
+    tick_size: float = BASELINE_TICK_SIZE        # for platform-native risk maths
+    tick_value: float = BASELINE_TICK_VALUE
     max_notional_x: float = BASELINE_MAX_NOTIONAL_X
+
+    # ---- minimum-lot override (OFF by default) ----------------------------
+    # Lets a small account trade the broker minimum when the 0.10 % target
+    # rounds below it. The two caps below are PERMISSION limits, not sizing
+    # targets - the target stays `risk_pct`. See msvsd/sizing.py.
+    enable_min_lot_override: bool = False
+    target_risk_pct_per_sleeve: Optional[float] = None   # None -> follow risk_pct
+    override_max_risk_pct_per_sleeve: float = 0.50
+    max_total_open_risk_pct: float = 1.00
+    stop_exit_slippage_points: float = BASELINE_SLIPPAGE_POINTS
 
     # ---- strategy --------------------------------------------------------
     sleeve_mode: str = "all"
@@ -151,6 +167,13 @@ class RunConfig:
             out.append((name, ent, scaled))
         return out
 
+    def effective_target_risk_pct(self) -> float:
+        """The NORMAL sizing target. `target_risk_pct_per_sleeve` is an explicit
+        alias used by the profiles; when unset the engine follows `risk_pct`, so
+        the two can never silently disagree."""
+        return (self.risk_pct if self.target_risk_pct_per_sleeve is None
+                else self.target_risk_pct_per_sleeve)
+
     def validate(self) -> None:
         bad = []
         if self.sleeve_mode not in SLEEVE_MODES:
@@ -170,6 +193,21 @@ class RunConfig:
             bad.append("event_mode=%r not in %s" % (self.event_mode, EVENT_MODES))
         if self.friday_basis not in FRIDAY_BASES:
             bad.append("friday_basis=%r not in %s" % (self.friday_basis, FRIDAY_BASES))
+        if self.minimum_lot <= 0:
+            bad.append("minimum_lot must be > 0")
+        if self.minimum_lot < self.lot_step - 1e-12:
+            bad.append("minimum_lot (%g) is below lot_step (%g); the broker "
+                       "minimum cannot be smaller than the increment"
+                       % (self.minimum_lot, self.lot_step))
+        if self.override_max_risk_pct_per_sleeve <= 0:
+            bad.append("override_max_risk_pct_per_sleeve must be > 0")
+        if self.max_total_open_risk_pct < self.override_max_risk_pct_per_sleeve:
+            bad.append("max_total_open_risk_pct (%g) is below the per-sleeve cap "
+                       "(%g); no override trade could ever pass both"
+                       % (self.max_total_open_risk_pct,
+                          self.override_max_risk_pct_per_sleeve))
+        if self.enable_min_lot_override and self.effective_target_risk_pct() <= 0:
+            bad.append("target risk must be > 0 when the override is enabled")
         if self.financing_timing not in ("post-fill", "pre-fill"):
             bad.append("financing_timing=%r not in ('post-fill','pre-fill')"
                        % self.financing_timing)
@@ -219,6 +257,10 @@ class RunConfig:
             out.append("V1_COMPAT__REPRODUCES_KNOWN_DEFECTS")
         if self.n_configs_tested > 1:
             out.append("MULTIPLE_TESTING__%d_CONFIGS" % self.n_configs_tested)
+        if self.enable_min_lot_override:
+            out.append("MIN_LOT_OVERRIDE__SLEEVE_%.2fPCT_TOTAL_%.2fPCT"
+                       % (self.override_max_risk_pct_per_sleeve,
+                          self.max_total_open_risk_pct))
         return out
 
     def to_dict(self) -> Dict:
@@ -237,6 +279,70 @@ class RunConfig:
 
     def replace(self, **kw) -> "RunConfig":
         return dataclasses.replace(self, **kw)
+
+
+# --------------------------------------------------------------------------
+# Named profiles. These are the only sanctioned combinations of the override
+# settings; anything else is an ad-hoc run and is labelled as such.
+PROFILES: Dict[str, Dict] = {
+    "baseline_strict": {
+        "_doc": "The frozen specification. Override off, 0.10 % per sleeve. "
+                "This is the published baseline and the default.",
+        "capital": BASELINE_CAPITAL,
+        "risk_pct": BASELINE_RISK_PCT,
+        "target_risk_pct_per_sleeve": BASELINE_RISK_PCT,
+        "enable_min_lot_override": False,
+        "minimum_lot": BASELINE_MINIMUM_LOT,
+        "lot_step": BASELINE_LOT_STEP,
+    },
+    "small_account_override": {
+        "_doc": "$10,000 account. Normal target stays 0.10 %; when that rounds "
+                "below the broker minimum, ONE minimum-lot position may be "
+                "placed if it passes a 0.50 % per-sleeve and 1.00 % total "
+                "open-risk gate. The caps are permissions, not targets.",
+        "capital": 10000.0,
+        "risk_pct": BASELINE_RISK_PCT,
+        "target_risk_pct_per_sleeve": BASELINE_RISK_PCT,
+        "enable_min_lot_override": True,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "override_max_risk_pct_per_sleeve": 0.50,
+        "max_total_open_risk_pct": 1.00,
+    },
+    "small_account_override_stress": {
+        "_doc": "DIAGNOSTIC ONLY - NOT RECOMMENDED. Same as "
+                "small_account_override with the permission caps doubled to "
+                "1.00 %/sleeve and 2.00 % total, to show how the gate responds "
+                "when it is loosened. Never treat this as a configuration to "
+                "trade.",
+        "capital": 10000.0,
+        "risk_pct": BASELINE_RISK_PCT,
+        "target_risk_pct_per_sleeve": BASELINE_RISK_PCT,
+        "enable_min_lot_override": True,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "override_max_risk_pct_per_sleeve": 1.00,
+        "max_total_open_risk_pct": 2.00,
+    },
+}
+DIAGNOSTIC_PROFILES = ("small_account_override_stress",)
+
+
+def apply_profile(cfg: "RunConfig", name: str) -> "RunConfig":
+    """Return a copy of `cfg` with the named profile's settings applied.
+
+    Explicit CLI flags are applied by the caller AFTER this, so a flag always
+    beats the profile it was combined with.
+    """
+    if name not in PROFILES:
+        raise ValueError("unknown profile %r; choose one of %s"
+                         % (name, sorted(PROFILES)))
+    kw = {k: v for k, v in PROFILES[name].items() if not k.startswith("_")}
+    out = cfg.replace(**kw)
+    out.label_flags = list(out.label_flags) + ["PROFILE__%s" % name.upper()]
+    if name in DIAGNOSTIC_PROFILES:
+        out.label_flags.append("DIAGNOSTIC_ONLY__NOT_RECOMMENDED")
+    return out
 
 
 def code_version() -> str:

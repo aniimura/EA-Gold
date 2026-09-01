@@ -1,0 +1,1980 @@
+{
+  "code_version": "b7e19c5d3caa",
+  "registry": {
+    "prior_configurations": 720,
+    "prior_source": "experiments.py --suite grid (720 cells)",
+    "post_hoc_profiles": [
+      {
+        "index": 721,
+        "name": "baseline_strict",
+        "post_hoc": true,
+        "diagnostic_only": false
+      },
+      {
+        "index": 722,
+        "name": "small_account_override",
+        "post_hoc": true,
+        "diagnostic_only": false
+      },
+      {
+        "index": 723,
+        "name": "small_account_override_stress",
+        "post_hoc": true,
+        "diagnostic_only": true
+      }
+    ],
+    "note": "The profiles below were specified AFTER the 2022-2026 results were known. They are appended to the prior count, never substituted for it.",
+    "total_configurations_examined": 723,
+    "trial_sharpe_std_per_period": 0.008368899108177766
+  },
+  "profiles": {
+    "baseline_strict": {
+      "profile": "baseline_strict",
+      "diagnostic_only": false,
+      "labels": [
+        "PROFILE__BASELINE_STRICT",
+        "APPROXIMATE_INTRABAR_STOPS",
+        "FLAT_CARRY_ASSUMPTION",
+        "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+        "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT",
+        "MULTIPLE_TESTING__721_CONFIGS"
+      ],
+      "config": {
+        "capital": 100000.0,
+        "risk_pct": 0.1,
+        "target_risk_pct_per_sleeve": 0.1,
+        "enable_min_lot_override": false,
+        "override_max_risk_pct_per_sleeve": 0.5,
+        "max_total_open_risk_pct": 1.0,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "contract_oz": 100.0
+      },
+      "starting_equity": 100000.0,
+      "ending_equity": 103624.47184999997,
+      "net_profit": 3624.4718499999726,
+      "return_pct": 3.6244718499999724,
+      "cagr_pct": 0.7674280766656993,
+      "max_dd_usd": 2751.360449999993,
+      "max_dd_pct": 2.6058737041555813,
+      "ann_vol_pct": 2.04377239575161,
+      "sharpe_lo_adjusted": 0.3853816655713178,
+      "sharpe_naive": 0.313810873967133,
+      "sortino": 0.36160717849977325,
+      "calmar": 0.29449933641906106,
+      "exposure_pct": 72.45351096308632,
+      "signals": 378,
+      "sleeve_trades": 306,
+      "campaigns": 122,
+      "trades_override": 0,
+      "trades_normal": 307,
+      "skipped_below_minimum": 71,
+      "rejected_sleeve_cap": 0,
+      "rejected_portfolio_cap": 0,
+      "by_reason": {
+        "ORDER_ACCEPTED_NORMAL_SIZE": 307,
+        "OVERRIDE_DISABLED": 71
+      },
+      "avg_stop_risk_pct": 0.08466287388428534,
+      "max_stop_risk_pct": 0.10174374187475652,
+      "avg_total_open_risk_pct": 0.27549473414988385,
+      "max_total_open_risk_pct": 2.862982748448703,
+      "distinct_position_sizes": 7,
+      "corr_size_inv_atr": 0.9795368960143247,
+      "by_direction": {
+        "long": {
+          "trades": 170,
+          "gross": 9919.480000000003,
+          "win_pct": 44.11764705882353,
+          "mean_R": 0.7083459221857683
+        },
+        "short": {
+          "trades": 136,
+          "gross": -3913.6499999999996,
+          "win_pct": 22.794117647058822,
+          "mean_R": -0.35220870791465236
+        }
+      },
+      "by_sleeve": {
+        "fast": {
+          "trades": 165,
+          "gross": 2188.1300000000037,
+          "win_pct": 35.15151515151515,
+          "mean_R": 0.15050614999829154
+        },
+        "medium": {
+          "trades": 94,
+          "gross": 1883.5999999999988,
+          "win_pct": 31.914893617021278,
+          "mean_R": 0.256530984232334
+        },
+        "slow": {
+          "trades": 47,
+          "gross": 1934.1000000000024,
+          "win_pct": 38.297872340425535,
+          "mean_R": 0.501510536758094
+        }
+      },
+      "yearly": [
+        {
+          "year": 2021,
+          "start_equity": 100000.0,
+          "end_equity": 100000.0,
+          "pnl": 0.0,
+          "return_pct": 0.0,
+          "max_dd_pct": 0.0,
+          "trades": 0,
+          "campaigns": 0
+        },
+        {
+          "year": 2022,
+          "start_equity": 100000.0,
+          "end_equity": 98873.2164,
+          "pnl": -1126.7836,
+          "return_pct": -1.1268,
+          "max_dd_pct": 1.7478,
+          "trades": 39,
+          "campaigns": 15
+        },
+        {
+          "year": 2023,
+          "start_equity": 98873.2164,
+          "end_equity": 100243.642,
+          "pnl": 1370.4256,
+          "return_pct": 1.386,
+          "max_dd_pct": 1.8357,
+          "trades": 79,
+          "campaigns": 26
+        },
+        {
+          "year": 2024,
+          "start_equity": 100243.642,
+          "end_equity": 99730.2787,
+          "pnl": -513.3633,
+          "return_pct": -0.5121,
+          "max_dd_pct": 2.0601,
+          "trades": 87,
+          "campaigns": 38
+        },
+        {
+          "year": 2025,
+          "start_equity": 99730.2787,
+          "end_equity": 102691.789,
+          "pnl": 2961.5103,
+          "return_pct": 2.9695,
+          "max_dd_pct": 2.4513,
+          "trades": 73,
+          "campaigns": 31
+        },
+        {
+          "year": 2026,
+          "start_equity": 102691.789,
+          "end_equity": 103624.4718,
+          "pnl": 932.6828,
+          "return_pct": 0.9082,
+          "max_dd_pct": 2.6059,
+          "trades": 28,
+          "campaigns": 12
+        }
+      ],
+      "gross_profit": 6005.830000000005,
+      "cost_spread_slip": 223.69000000003825,
+      "cost_commission": 66.2147499999998,
+      "cost_swap": -2362.1133999999824,
+      "cost_waterfall": [
+        {
+          "component": "gross_price_pnl",
+          "usd": 6005.830000000005
+        },
+        {
+          "component": "spread_and_slippage",
+          "usd": -223.69000000003825
+        },
+        {
+          "component": "commission",
+          "usd": -66.2147499999998
+        },
+        {
+          "component": "financing_swap",
+          "usd": -2362.1133999999824
+        },
+        {
+          "component": "netting_and_lot_rounding",
+          "usd": 270.65999999999303
+        },
+        {
+          "component": "net_to_account",
+          "usd": 3624.471849999977
+        }
+      ],
+      "concentration_campaigns": {
+        "campaign_net_n": 122,
+        "campaign_net_total": 3331.897849999967,
+        "campaign_net_mean": 27.31063811475383,
+        "campaign_net_median": -69.45317500000041,
+        "campaign_net_top1_sum": 3106.2151999999965,
+        "campaign_net_top1_share_pct": 93.22660357069552,
+        "campaign_net_excl_top1_total": 225.68264999997064,
+        "campaign_net_excl_top1_mean": 1.8651458677683523,
+        "campaign_net_top3_sum": 5994.378649999997,
+        "campaign_net_top3_share_pct": 179.90883634082766,
+        "campaign_net_excl_top3_total": -2662.48080000003,
+        "campaign_net_excl_top3_mean": -22.37378823529437,
+        "campaign_net_top5_sum": 7880.86069999999,
+        "campaign_net_top5_share_pct": 236.527680462955,
+        "campaign_net_excl_top5_total": -4548.9628500000235,
+        "campaign_net_excl_top5_mean": -38.88002435897456,
+        "campaign_net_top10_sum": 10246.05424999998,
+        "campaign_net_top10_share_pct": 307.5140568910323,
+        "campaign_net_excl_top10_total": -6914.156400000013,
+        "campaign_net_excl_top10_mean": -61.7335392857144
+      },
+      "campaign_bootstrap_usd": {
+        "method": "campaign_bootstrap_usd",
+        "units": "net USD per campaign",
+        "point_estimate": 27.31063811475383,
+        "bootstrap_mean": 27.127301724938256,
+        "standard_error": 36.236380431722,
+        "ci90": [
+          -27.294952622950966,
+          91.02208354508171
+        ],
+        "ci95": [
+          -35.76570296106583,
+          104.84420978483547
+        ],
+        "ci99": [
+          -50.213567924180666,
+          133.37274103073747
+        ],
+        "p_mean_le_zero": 0.23755,
+        "effective_observations": 122,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples campaign net P&L in dollars, so a campaign that risked three sleeves counts for what it actually made rather than being normalised away. This is the test of whether the average campaign is profitable after every modelled cost."
+      },
+      "p_mean_campaign_le_zero": 0.23755,
+      "block_monthly": {
+        "method": "monthly_block_bootstrap",
+        "units": "mean daily return",
+        "point_estimate": 2.545071435320293e-05,
+        "bootstrap_mean": 2.5477025790143387e-05,
+        "standard_error": 2.7613410103414967e-05,
+        "ci90": [
+          -1.8944371499735302e-05,
+          7.165009824055556e-05
+        ],
+        "ci95": [
+          -2.679614806785098e-05,
+          8.106977791431527e-05
+        ],
+        "ci99": [
+          -4.191166671716814e-05,
+          0.00010053215650457965
+        ],
+        "p_mean_le_zero": 0.18085,
+        "effective_observations": 56,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples whole monthly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (56), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+      },
+      "block_quarterly": {
+        "method": "quarterly_block_bootstrap",
+        "units": "mean daily return",
+        "point_estimate": 2.545071435320293e-05,
+        "bootstrap_mean": 2.535197492046536e-05,
+        "standard_error": 2.2824223290432887e-05,
+        "ci90": [
+          -1.218955470008436e-05,
+          6.336378380407866e-05
+        ],
+        "ci95": [
+          -1.9458600909894353e-05,
+          7.043892847708622e-05
+        ],
+        "ci99": [
+          -3.325283494199482e-05,
+          8.44573506225553e-05
+        ],
+        "p_mean_le_zero": 0.1317,
+        "effective_observations": 19,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples whole quarterly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (19), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+      },
+      "deflated_sharpe": {
+        "deflated_sharpe": null,
+        "reason": "insufficient_inputs: needs >= 2 trials, a positive spread of trial Sharpes and >= 30 observations. Run experiments.py, which supplies all three."
+      },
+      "dist_stop_risk_pct": {
+        "min": 0.05416572846783523,
+        "p10": 0.06949650855986936,
+        "p25": 0.07739174911125188,
+        "p50": 0.08640693889104059,
+        "p75": 0.09309734730865776,
+        "p90": 0.0977417050893399,
+        "p95": 0.0999376237305732,
+        "max": 0.10174374187475652
+      },
+      "dist_total_open_risk_pct": {
+        "min": 0.05416572846783523,
+        "p10": 0.07731344189197949,
+        "p25": 0.08734716047752666,
+        "p50": 0.16789328794168798,
+        "p75": 0.33542334847364746,
+        "p90": 0.557281362769684,
+        "p95": 0.8220346378169531,
+        "max": 2.862982748448703
+      },
+      "dist_hold_hours": {
+        "min": 4.0,
+        "p10": 24.0,
+        "p25": 48.0,
+        "p50": 112.0,
+        "p75": 267.0,
+        "p90": 474.0,
+        "p95": 593.0,
+        "max": 1476.0
+      },
+      "dist_atr_at_entry": {
+        "min": 5.088062502921581,
+        "p10": 7.8399392973586,
+        "p25": 9.913121686383027,
+        "p50": 12.497356005194582,
+        "p75": 17.493908461419416,
+        "p90": 33.42252982007045,
+        "p95": 36.63304194710093,
+        "max": 40.89345399849231
+      },
+      "dist_stop_distance": {
+        "min": 12.720156257303952,
+        "p10": 19.5998482433965,
+        "p25": 24.78280421595757,
+        "p50": 31.24339001298646,
+        "p75": 43.734771153548536,
+        "p90": 83.55632455017613,
+        "p95": 91.58260486775232,
+        "max": 102.23363499623078
+      },
+      "notional": {
+        "bars_evaluated": 7084,
+        "cap_binding_bars": 0,
+        "cap_binding_pct": 0.0,
+        "intended_exposure_lot_bars": 291.9899999999901,
+        "executed_exposure_lot_bars": 291.9899999999901,
+        "exposure_shortfall_pct": 0.0,
+        "net_target_rounding_loss_lot_bars": 1.8943180357666733e-15,
+        "sizing_intended_lots": 9.890166620024454,
+        "sizing_executed_lots": 8.439999999999968,
+        "sizing_rounding_loss_lots": 1.450166620024459,
+        "sizing_rounding_loss_pct": 14.662711719015238,
+        "max_abs_position_lots": 0.2
+      },
+      "sizing_report": {
+        "override_enabled": false,
+        "target_risk_pct_per_sleeve": 0.1,
+        "override_max_risk_pct_per_sleeve": 0.5,
+        "max_total_open_risk_pct": 1.0,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "signals_evaluated": 378,
+        "by_reason": {
+          "ORDER_ACCEPTED_NORMAL_SIZE": 307,
+          "OVERRIDE_DISABLED": 71
+        },
+        "accepted": 307,
+        "accepted_normal": 307,
+        "accepted_override": 0,
+        "rejected": 71,
+        "accepted_max_stop_risk_pct": 0.10174374187475652,
+        "accepted_median_stop_risk_pct": 0.08640693889104059,
+        "accepted_max_total_open_risk_pct": 2.862982748448703
+      },
+      "registry_index": 721,
+      "n_configs_tested": 721,
+      "override_rates": {
+        "by_year": [
+          {
+            "year": 2025,
+            "candidates": 7,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          },
+          {
+            "year": 2026,
+            "candidates": 64,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          }
+        ],
+        "by_sleeve": [
+          {
+            "sleeve": "fast",
+            "candidates": 46,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          },
+          {
+            "sleeve": "medium",
+            "candidates": 17,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          },
+          {
+            "sleeve": "slow",
+            "candidates": 8,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          }
+        ],
+        "by_direction": [
+          {
+            "direction": "long",
+            "candidates": 29,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          },
+          {
+            "direction": "short",
+            "candidates": 42,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          }
+        ]
+      },
+      "diagnostics": {
+        "1_accepted_atr": {},
+        "2_rejected_atr": {
+          "p10": 44.06835638749058,
+          "p50": 52.184940189615595,
+          "p90": 79.03530556643564
+        },
+        "volatility_separation": {
+          "accepted_median_atr": null,
+          "rejected_median_atr": 52.184940189615595,
+          "ratio_rejected_over_accepted": null,
+          "atr_threshold_implied": 200.0
+        },
+        "5_acts_as_volatility_filter": {
+          "implied_atr_ceiling": 200.0,
+          "pct_accepted_below_ceiling": null,
+          "pct_rejected_above_ceiling": 0.0
+        },
+        "3_portfolio_cap_by_sleeve": [
+          {
+            "sleeve": "fast",
+            "candidates": 46,
+            "rej_portfolio": 0,
+            "rej_portfolio_pct": 0.0
+          },
+          {
+            "sleeve": "medium",
+            "candidates": 17,
+            "rej_portfolio": 0,
+            "rej_portfolio_pct": 0.0
+          },
+          {
+            "sleeve": "slow",
+            "candidates": 8,
+            "rej_portfolio": 0,
+            "rej_portfolio_pct": 0.0
+          }
+        ],
+        "3_open_risk_when_portfolio_rejected": {},
+        "4_composition_shift": {
+          "sleeve": {
+            "candidates_pct": {
+              "fast": 64.79,
+              "medium": 23.94,
+              "slow": 11.27
+            },
+            "accepted_pct": {}
+          },
+          "direction": {
+            "candidates_pct": {
+              "short": 59.15,
+              "long": 40.85
+            },
+            "accepted_pct": {}
+          }
+        },
+        "6_realised_cost_share_of_gross": 44.15739622999682,
+        "7_top5_share_pct": 236.527680462955,
+        "7_excl_top5_total": -4548.9628500000235,
+        "7_campaigns": 122
+      }
+    },
+    "small_account_override": {
+      "profile": "small_account_override",
+      "diagnostic_only": false,
+      "labels": [
+        "PROFILE__SMALL_ACCOUNT_OVERRIDE",
+        "APPROXIMATE_INTRABAR_STOPS",
+        "FLAT_CARRY_ASSUMPTION",
+        "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+        "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT",
+        "MULTIPLE_TESTING__722_CONFIGS",
+        "MIN_LOT_OVERRIDE__SLEEVE_0.50PCT_TOTAL_1.00PCT"
+      ],
+      "config": {
+        "capital": 10000.0,
+        "risk_pct": 0.1,
+        "target_risk_pct_per_sleeve": 0.1,
+        "enable_min_lot_override": true,
+        "override_max_risk_pct_per_sleeve": 0.5,
+        "max_total_open_risk_pct": 1.0,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "contract_oz": 100.0
+      },
+      "starting_equity": 10000.0,
+      "ending_equity": 10465.556599999989,
+      "net_profit": 465.556599999989,
+      "return_pct": 4.65556599999989,
+      "cagr_pct": 0.9818909141275922,
+      "max_dd_usd": 773.7868999999955,
+      "max_dd_pct": 7.617139809588417,
+      "ann_vol_pct": 4.428864832637164,
+      "sharpe_lo_adjusted": 0.2049549990486593,
+      "sharpe_naive": 0.20118835617749328,
+      "sortino": 0.2104423711803291,
+      "calmar": 0.12890546040543893,
+      "exposure_pct": 52.70607826810991,
+      "signals": 868,
+      "sleeve_trades": 194,
+      "campaigns": 98,
+      "trades_override": 194,
+      "trades_normal": 0,
+      "skipped_below_minimum": 0,
+      "rejected_sleeve_cap": 463,
+      "rejected_portfolio_cap": 211,
+      "by_reason": {
+        "OVERRIDE_SLEEVE_RISK_EXCEEDED": 463,
+        "PORTFOLIO_OPEN_RISK_EXCEEDED": 211,
+        "ORDER_ACCEPTED_MINIMUM_OVERRIDE": 194
+      },
+      "avg_stop_risk_pct": 0.29701252746811796,
+      "max_stop_risk_pct": 0.4938762742410219,
+      "avg_total_open_risk_pct": 0.4322288394178092,
+      "max_total_open_risk_pct": 0.9886553940956555,
+      "distinct_position_sizes": 1,
+      "corr_size_inv_atr": 5.753400369288207e-18,
+      "by_direction": {
+        "long": {
+          "trades": 109,
+          "gross": 2006.1700000000008,
+          "win_pct": 39.44954128440367,
+          "mean_R": 0.698648587962436
+        },
+        "short": {
+          "trades": 85,
+          "gross": -986.4200000000019,
+          "win_pct": 24.705882352941178,
+          "mean_R": -0.28997011339871415
+        }
+      },
+      "by_sleeve": {
+        "fast": {
+          "trades": 108,
+          "gross": 122.53000000000088,
+          "win_pct": 30.555555555555557,
+          "mean_R": 0.1260363205387987
+        },
+        "medium": {
+          "trades": 61,
+          "gross": 849.7899999999981,
+          "win_pct": 37.704918032786885,
+          "mean_R": 0.5673590680277337
+        },
+        "slow": {
+          "trades": 25,
+          "gross": 47.429999999999836,
+          "win_pct": 32.0,
+          "mean_R": 0.13137642724531212
+        }
+      },
+      "yearly": [
+        {
+          "year": 2021,
+          "start_equity": 10000.0,
+          "end_equity": 10000.0,
+          "pnl": 0.0,
+          "return_pct": 0.0,
+          "max_dd_pct": 0.0,
+          "trades": 0,
+          "campaigns": 0
+        },
+        {
+          "year": 2022,
+          "start_equity": 10000.0,
+          "end_equity": 9487.2623,
+          "pnl": -512.7377,
+          "return_pct": -5.1274,
+          "max_dd_pct": 7.2394,
+          "trades": 37,
+          "campaigns": 15
+        },
+        {
+          "year": 2023,
+          "start_equity": 9487.2623,
+          "end_equity": 9799.4568,
+          "pnl": 312.1945,
+          "return_pct": 3.2907,
+          "max_dd_pct": 3.0693,
+          "trades": 65,
+          "campaigns": 30
+        },
+        {
+          "year": 2024,
+          "start_equity": 9799.4568,
+          "end_equity": 9565.4249,
+          "pnl": -234.0318,
+          "return_pct": -2.3882,
+          "max_dd_pct": 6.5596,
+          "trades": 66,
+          "campaigns": 36
+        },
+        {
+          "year": 2025,
+          "start_equity": 9565.4249,
+          "end_equity": 10465.5566,
+          "pnl": 900.1316,
+          "return_pct": 9.4103,
+          "max_dd_pct": 3.4162,
+          "trades": 26,
+          "campaigns": 17
+        },
+        {
+          "year": 2026,
+          "start_equity": 10465.5566,
+          "end_equity": 10465.5566,
+          "pnl": 0.0,
+          "return_pct": 0.0,
+          "max_dd_pct": 0.0,
+          "trades": 0,
+          "campaigns": 0
+        }
+      ],
+      "gross_profit": 1019.7499999999989,
+      "cost_spread_slip": 51.330000000010614,
+      "cost_commission": 15.22899999999991,
+      "cost_swap": -487.63440000000094,
+      "cost_waterfall": [
+        {
+          "component": "gross_price_pnl",
+          "usd": 1019.7499999999989
+        },
+        {
+          "component": "spread_and_slippage",
+          "usd": -51.330000000010614
+        },
+        {
+          "component": "commission",
+          "usd": -15.22899999999991
+        },
+        {
+          "component": "financing_swap",
+          "usd": -487.63440000000094
+        },
+        {
+          "component": "netting_and_lot_rounding",
+          "usd": 2.4442670110147446e-12
+        },
+        {
+          "component": "net_to_account",
+          "usd": 465.5565999999898
+        }
+      ],
+      "concentration_campaigns": {
+        "campaign_net_n": 98,
+        "campaign_net_total": 471.06064999999,
+        "campaign_net_mean": 4.80674132653051,
+        "campaign_net_median": -20.556250000000013,
+        "campaign_net_top1_sum": 963.2747999999992,
+        "campaign_net_top1_share_pct": 204.49061071011124,
+        "campaign_net_excl_top1_total": -492.2141500000092,
+        "campaign_net_excl_top1_mean": -5.074372680412466,
+        "campaign_net_top3_sum": 1524.767199999999,
+        "campaign_net_top3_share_pct": 323.6880856000244,
+        "campaign_net_excl_top3_total": -1053.706550000009,
+        "campaign_net_excl_top3_mean": -11.091647894736937,
+        "campaign_net_top5_sum": 1969.7461999999982,
+        "campaign_net_top5_share_pct": 418.15129325704453,
+        "campaign_net_excl_top5_total": -1498.6855500000083,
+        "campaign_net_excl_top5_mean": -16.114898387096865,
+        "campaign_net_top10_sum": 2682.249149999998,
+        "campaign_net_top10_share_pct": 569.4063280386623,
+        "campaign_net_excl_top10_total": -2211.188500000008,
+        "campaign_net_excl_top10_mean": -25.127142045454637
+      },
+      "campaign_bootstrap_usd": {
+        "method": "campaign_bootstrap_usd",
+        "units": "net USD per campaign",
+        "point_estimate": 4.80674132653051,
+        "bootstrap_mean": 4.603221371887654,
+        "standard_error": 12.447895147809776,
+        "ci90": [
+          -13.921040637755212,
+          26.753056173469247
+        ],
+        "ci95": [
+          -16.705730293367495,
+          32.02164821428558
+        ],
+        "ci99": [
+          -21.231289178571544,
+          41.685252821428556
+        ],
+        "p_mean_le_zero": 0.38425,
+        "effective_observations": 98,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples campaign net P&L in dollars, so a campaign that risked three sleeves counts for what it actually made rather than being normalised away. This is the test of whether the average campaign is profitable after every modelled cost."
+      },
+      "p_mean_campaign_le_zero": 0.38425,
+      "block_monthly": {
+        "method": "monthly_block_bootstrap",
+        "units": "mean daily return",
+        "point_estimate": 3.5358572833753165e-05,
+        "bootstrap_mean": 3.518245398967498e-05,
+        "standard_error": 6.891779896497649e-05,
+        "ci90": [
+          -7.426013582247945e-05,
+          0.00015273849654070905
+        ],
+        "ci95": [
+          -9.442716881168034e-05,
+          0.0001752455101020557
+        ],
+        "ci99": [
+          -0.00013254558275598705,
+          0.00022513340835793796
+        ],
+        "p_mean_le_zero": 0.31075,
+        "effective_observations": 56,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples whole monthly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (56), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+      },
+      "block_quarterly": {
+        "method": "quarterly_block_bootstrap",
+        "units": "mean daily return",
+        "point_estimate": 3.5358572833753165e-05,
+        "bootstrap_mean": 3.547569013536366e-05,
+        "standard_error": 5.184950964197169e-05,
+        "ci90": [
+          -4.569186137268784e-05,
+          0.0001260959983587303
+        ],
+        "ci95": [
+          -5.881276368317255e-05,
+          0.00014414405877270607
+        ],
+        "ci99": [
+          -8.365205020117903e-05,
+          0.00018205835666014578
+        ],
+        "p_mean_le_zero": 0.2552,
+        "effective_observations": 19,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples whole quarterly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (19), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+      },
+      "deflated_sharpe": {
+        "deflated_sharpe": null,
+        "reason": "insufficient_inputs: needs >= 2 trials, a positive spread of trial Sharpes and >= 30 observations. Run experiments.py, which supplies all three."
+      },
+      "dist_stop_risk_pct": {
+        "min": 0.13771910983682045,
+        "p10": 0.19015701095613238,
+        "p25": 0.22881115597164983,
+        "p50": 0.29287324337333787,
+        "p75": 0.3626624605285517,
+        "p90": 0.4136223443951314,
+        "p95": 0.44109862726009363,
+        "max": 0.4938762742410219
+      },
+      "dist_total_open_risk_pct": {
+        "min": 0.15618960761196146,
+        "p10": 0.21349813558328518,
+        "p25": 0.2683374117988513,
+        "p50": 0.38199890627249067,
+        "p75": 0.49838935877904855,
+        "p90": 0.8308131720239107,
+        "p95": 0.8874410917559068,
+        "max": 0.9886553940956555
+      },
+      "dist_hold_hours": {
+        "min": 4.0,
+        "p10": 24.0,
+        "p25": 45.0,
+        "p50": 100.0,
+        "p75": 271.0,
+        "p90": 452.0,
+        "p95": 556.1999999999999,
+        "max": 1476.0
+      },
+      "dist_atr_at_entry": {
+        "min": 5.088062502921581,
+        "p10": 7.171445121368424,
+        "p25": 8.632043574974812,
+        "p50": 11.221568603470413,
+        "p75": 13.74069032916502,
+        "p90": 16.05312862534675,
+        "p95": 16.971882750607318,
+        "max": 19.123858260625607
+      },
+      "dist_stop_distance": {
+        "min": 12.720156257303952,
+        "p10": 17.92861280342106,
+        "p25": 21.580108937437032,
+        "p50": 28.05392150867603,
+        "p75": 34.35172582291255,
+        "p90": 40.13282156336688,
+        "p95": 42.429706876518296,
+        "max": 47.80964565156402
+      },
+      "notional": {
+        "bars_evaluated": 7084,
+        "cap_binding_bars": 0,
+        "cap_binding_pct": 0.0,
+        "intended_exposure_lot_bars": 62.42999999999991,
+        "executed_exposure_lot_bars": 62.42999999999991,
+        "exposure_shortfall_pct": 0.0,
+        "net_target_rounding_loss_lot_bars": 0.0,
+        "sizing_intended_lots": 0.7243244771621519,
+        "sizing_executed_lots": 1.9400000000000015,
+        "sizing_rounding_loss_lots": 0.0,
+        "sizing_rounding_loss_pct": 0.0,
+        "max_abs_position_lots": 0.03
+      },
+      "sizing_report": {
+        "override_enabled": true,
+        "target_risk_pct_per_sleeve": 0.1,
+        "override_max_risk_pct_per_sleeve": 0.5,
+        "max_total_open_risk_pct": 1.0,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "signals_evaluated": 868,
+        "by_reason": {
+          "OVERRIDE_SLEEVE_RISK_EXCEEDED": 463,
+          "PORTFOLIO_OPEN_RISK_EXCEEDED": 211,
+          "ORDER_ACCEPTED_MINIMUM_OVERRIDE": 194
+        },
+        "accepted": 194,
+        "accepted_normal": 0,
+        "accepted_override": 194,
+        "rejected": 674,
+        "accepted_max_stop_risk_pct": 0.4938762742410219,
+        "accepted_median_stop_risk_pct": 0.29287324337333787,
+        "accepted_max_total_open_risk_pct": 0.9886553940956555,
+        "override_stop_risk_pct_median": 0.29287324337333787,
+        "override_stop_risk_pct_max": 0.4938762742410219
+      },
+      "registry_index": 722,
+      "n_configs_tested": 722,
+      "override_rates": {
+        "by_year": [
+          {
+            "year": 2022,
+            "candidates": 47,
+            "accepted": 38,
+            "accept_pct": 80.85106382978722,
+            "rej_sleeve": 3,
+            "rej_portfolio": 6
+          },
+          {
+            "year": 2023,
+            "candidates": 117,
+            "accepted": 65,
+            "accept_pct": 55.55555555555556,
+            "rej_sleeve": 0,
+            "rej_portfolio": 52
+          },
+          {
+            "year": 2024,
+            "candidates": 142,
+            "accepted": 66,
+            "accept_pct": 46.478873239436616,
+            "rej_sleeve": 1,
+            "rej_portfolio": 75
+          },
+          {
+            "year": 2025,
+            "candidates": 329,
+            "accepted": 25,
+            "accept_pct": 7.598784194528875,
+            "rej_sleeve": 226,
+            "rej_portfolio": 78
+          },
+          {
+            "year": 2026,
+            "candidates": 233,
+            "accepted": 0,
+            "accept_pct": 0.0,
+            "rej_sleeve": 233,
+            "rej_portfolio": 0
+          }
+        ],
+        "by_sleeve": [
+          {
+            "sleeve": "fast",
+            "candidates": 413,
+            "accepted": 108,
+            "accept_pct": 26.150121065375302,
+            "rej_sleeve": 227,
+            "rej_portfolio": 78
+          },
+          {
+            "sleeve": "medium",
+            "candidates": 215,
+            "accepted": 61,
+            "accept_pct": 28.37209302325581,
+            "rej_sleeve": 120,
+            "rej_portfolio": 34
+          },
+          {
+            "sleeve": "slow",
+            "candidates": 240,
+            "accepted": 25,
+            "accept_pct": 10.416666666666668,
+            "rej_sleeve": 116,
+            "rej_portfolio": 99
+          }
+        ],
+        "by_direction": [
+          {
+            "direction": "long",
+            "candidates": 611,
+            "accepted": 109,
+            "accept_pct": 17.83960720130933,
+            "rej_sleeve": 333,
+            "rej_portfolio": 169
+          },
+          {
+            "direction": "short",
+            "candidates": 257,
+            "accepted": 85,
+            "accept_pct": 33.07392996108949,
+            "rej_sleeve": 130,
+            "rej_portfolio": 42
+          }
+        ]
+      },
+      "diagnostics": {
+        "1_accepted_atr": {
+          "p10": 7.171445121368424,
+          "p50": 11.221568603470413,
+          "p90": 16.05312862534675
+        },
+        "2_rejected_atr": {
+          "p10": 10.92371461320592,
+          "p50": 28.487310068638873,
+          "p90": 50.25682241194141
+        },
+        "volatility_separation": {
+          "accepted_median_atr": 11.221568603470413,
+          "rejected_median_atr": 28.487310068638873,
+          "ratio_rejected_over_accepted": 2.538621031985565,
+          "atr_threshold_implied": 20.0
+        },
+        "5_acts_as_volatility_filter": {
+          "implied_atr_ceiling": 20.0,
+          "pct_accepted_below_ceiling": 100.0,
+          "pct_rejected_above_ceiling": 68.5459940652819
+        },
+        "3_portfolio_cap_by_sleeve": [
+          {
+            "sleeve": "fast",
+            "candidates": 413,
+            "rej_portfolio": 78,
+            "rej_portfolio_pct": 18.886198547215496
+          },
+          {
+            "sleeve": "medium",
+            "candidates": 215,
+            "rej_portfolio": 34,
+            "rej_portfolio_pct": 15.813953488372093
+          },
+          {
+            "sleeve": "slow",
+            "candidates": 240,
+            "rej_portfolio": 99,
+            "rej_portfolio_pct": 41.25
+          }
+        ],
+        "3_open_risk_when_portfolio_rejected": {
+          "p10": 0.9346426017736885,
+          "p50": 1.6304612837566257,
+          "p90": 2.982660177026847
+        },
+        "4_composition_shift": {
+          "sleeve": {
+            "candidates_pct": {
+              "fast": 47.58,
+              "slow": 27.65,
+              "medium": 24.77
+            },
+            "accepted_pct": {
+              "fast": 55.67,
+              "medium": 31.44,
+              "slow": 12.89
+            }
+          },
+          "direction": {
+            "candidates_pct": {
+              "long": 70.39,
+              "short": 29.61
+            },
+            "accepted_pct": {
+              "long": 56.19,
+              "short": 43.81
+            }
+          }
+        },
+        "6_cost_share_at_min_lot": {
+          "median_price_stop_loss": 28.053921508676034,
+          "median_estimated_costs": 0.2785,
+          "costs_as_pct_of_stop_risk": 1.1209291811222635
+        },
+        "6_realised_cost_share_of_gross": 54.346006374112484,
+        "7_top5_share_pct": 418.15129325704453,
+        "7_excl_top5_total": -1498.6855500000083,
+        "7_campaigns": 98
+      }
+    },
+    "small_account_override_stress": {
+      "profile": "small_account_override_stress",
+      "diagnostic_only": true,
+      "labels": [
+        "PROFILE__SMALL_ACCOUNT_OVERRIDE_STRESS",
+        "DIAGNOSTIC_ONLY__NOT_RECOMMENDED",
+        "APPROXIMATE_INTRABAR_STOPS",
+        "FLAT_CARRY_ASSUMPTION",
+        "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+        "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT",
+        "MULTIPLE_TESTING__723_CONFIGS",
+        "MIN_LOT_OVERRIDE__SLEEVE_1.00PCT_TOTAL_2.00PCT"
+      ],
+      "config": {
+        "capital": 10000.0,
+        "risk_pct": 0.1,
+        "target_risk_pct_per_sleeve": 0.1,
+        "enable_min_lot_override": true,
+        "override_max_risk_pct_per_sleeve": 1.0,
+        "max_total_open_risk_pct": 2.0,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "contract_oz": 100.0
+      },
+      "starting_equity": 10000.0,
+      "ending_equity": 11786.861049999981,
+      "net_profit": 1786.8610499999813,
+      "return_pct": 17.86861049999981,
+      "cagr_pct": 3.5931614901755005,
+      "max_dd_usd": 1200.9679500000293,
+      "max_dd_pct": 11.597487569510825,
+      "ann_vol_pct": 6.9370818238636165,
+      "sharpe_lo_adjusted": 0.44566181009263467,
+      "sharpe_naive": 0.44774382172668475,
+      "sortino": 0.5113075766798011,
+      "calmar": 0.30982240495102836,
+      "exposure_pct": 69.74743269497641,
+      "signals": 566,
+      "sleeve_trades": 263,
+      "campaigns": 124,
+      "trades_override": 264,
+      "trades_normal": 0,
+      "skipped_below_minimum": 0,
+      "rejected_sleeve_cap": 74,
+      "rejected_portfolio_cap": 228,
+      "by_reason": {
+        "ORDER_ACCEPTED_MINIMUM_OVERRIDE": 264,
+        "PORTFOLIO_OPEN_RISK_EXCEEDED": 228,
+        "OVERRIDE_SLEEVE_RISK_EXCEEDED": 74
+      },
+      "avg_stop_risk_pct": 0.373727163500159,
+      "max_stop_risk_pct": 0.9856654172918022,
+      "avg_total_open_risk_pct": 0.7072336366644041,
+      "max_total_open_risk_pct": 1.9888471320972545,
+      "distinct_position_sizes": 1,
+      "corr_size_inv_atr": null,
+      "by_direction": {
+        "long": {
+          "trades": 146,
+          "gross": 3935.7400000000016,
+          "win_pct": 43.83561643835616,
+          "mean_R": 0.7855033462791347
+        },
+        "short": {
+          "trades": 117,
+          "gross": -1407.6999999999991,
+          "win_pct": 24.786324786324787,
+          "mean_R": -0.2694269114160139
+        }
+      },
+      "by_sleeve": {
+        "fast": {
+          "trades": 151,
+          "gross": 1504.240000000002,
+          "win_pct": 35.76158940397351,
+          "mean_R": 0.21581959237190604
+        },
+        "medium": {
+          "trades": 76,
+          "gross": 412.39999999999964,
+          "win_pct": 32.89473684210527,
+          "mean_R": 0.3272498069320838
+        },
+        "slow": {
+          "trades": 36,
+          "gross": 611.400000000001,
+          "win_pct": 38.88888888888889,
+          "mean_R": 0.7139110040578852
+        }
+      },
+      "yearly": [
+        {
+          "year": 2021,
+          "start_equity": 10000.0,
+          "end_equity": 10000.0,
+          "pnl": 0.0,
+          "return_pct": 0.0,
+          "max_dd_pct": 0.0,
+          "trades": 0,
+          "campaigns": 0
+        },
+        {
+          "year": 2022,
+          "start_equity": 10000.0,
+          "end_equity": 9531.5532,
+          "pnl": -468.4468,
+          "return_pct": -4.6845,
+          "max_dd_pct": 7.2409,
+          "trades": 39,
+          "campaigns": 15
+        },
+        {
+          "year": 2023,
+          "start_equity": 9531.5532,
+          "end_equity": 9962.8223,
+          "pnl": 431.2691,
+          "return_pct": 4.5246,
+          "max_dd_pct": 2.9324,
+          "trades": 68,
+          "campaigns": 25
+        },
+        {
+          "year": 2024,
+          "start_equity": 9962.8223,
+          "end_equity": 9602.259,
+          "pnl": -360.5632,
+          "return_pct": -3.6191,
+          "max_dd_pct": 8.1987,
+          "trades": 84,
+          "campaigns": 37
+        },
+        {
+          "year": 2025,
+          "start_equity": 9602.259,
+          "end_equity": 10903.6611,
+          "pnl": 1301.4021,
+          "return_pct": 13.5531,
+          "max_dd_pct": 10.5444,
+          "trades": 53,
+          "campaigns": 31
+        },
+        {
+          "year": 2026,
+          "start_equity": 10903.6611,
+          "end_equity": 11786.861,
+          "pnl": 883.1999,
+          "return_pct": 8.1,
+          "max_dd_pct": 6.7383,
+          "trades": 19,
+          "campaigns": 16
+        }
+      ],
+      "gross_profit": 2528.0400000000027,
+      "cost_spread_slip": 67.50000000002456,
+      "cost_commission": 20.684749999999827,
+      "cost_swap": -678.3441999999978,
+      "cost_waterfall": [
+        {
+          "component": "gross_price_pnl",
+          "usd": 2528.0400000000027
+        },
+        {
+          "component": "spread_and_slippage",
+          "usd": -67.50000000002456
+        },
+        {
+          "component": "commission",
+          "usd": -20.684749999999827
+        },
+        {
+          "component": "financing_swap",
+          "usd": -678.3441999999978
+        },
+        {
+          "component": "netting_and_lot_rounding",
+          "usd": 25.34999999999991
+        },
+        {
+          "component": "net_to_account",
+          "usd": 1786.8610499999804
+        }
+      ],
+      "concentration_campaigns": {
+        "campaign_net_n": 124,
+        "campaign_net_total": 1762.1123499999815,
+        "campaign_net_mean": 14.210583467741786,
+        "campaign_net_median": -21.908449999999583,
+        "campaign_net_top1_sum": 1473.6648499999992,
+        "campaign_net_top1_share_pct": 83.63058405441711,
+        "campaign_net_excl_top1_total": 288.44749999998226,
+        "campaign_net_excl_top1_mean": 2.345101626016116,
+        "campaign_net_top3_sum": 2407.3584,
+        "campaign_net_top3_share_pct": 136.61775879387176,
+        "campaign_net_excl_top3_total": -645.2460500000186,
+        "campaign_net_excl_top3_mean": -5.332611983471228,
+        "campaign_net_top5_sum": 2999.7792999999992,
+        "campaign_net_top5_share_pct": 170.23768660380995,
+        "campaign_net_excl_top5_total": -1237.6669500000178,
+        "campaign_net_excl_top5_mean": -10.400562605042166,
+        "campaign_net_top10_sum": 4187.256699999996,
+        "campaign_net_top10_share_pct": 237.62711270935932,
+        "campaign_net_excl_top10_total": -2425.144350000015,
+        "campaign_net_excl_top10_mean": -21.27319605263171
+      },
+      "campaign_bootstrap_usd": {
+        "method": "campaign_bootstrap_usd",
+        "units": "net USD per campaign",
+        "point_estimate": 14.210583467741786,
+        "bootstrap_mean": 14.183947610665172,
+        "standard_error": 15.239771637117634,
+        "ci90": [
+          -8.491031572580765,
+          40.9584962096773
+        ],
+        "ci95": [
+          -11.917333548387276,
+          47.86310957661275
+        ],
+        "ci99": [
+          -18.047939929435604,
+          61.09312065725791
+        ],
+        "p_mean_le_zero": 0.17505,
+        "effective_observations": 124,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples campaign net P&L in dollars, so a campaign that risked three sleeves counts for what it actually made rather than being normalised away. This is the test of whether the average campaign is profitable after every modelled cost."
+      },
+      "p_mean_campaign_le_zero": 0.17505,
+      "block_monthly": {
+        "method": "monthly_block_bootstrap",
+        "units": "mean daily return",
+        "point_estimate": 0.00012325537807331017,
+        "bootstrap_mean": 0.0001234362122052118,
+        "standard_error": 0.00010890606102709239,
+        "ci90": [
+          -4.800847178094974e-05,
+          0.0003076395797598289
+        ],
+        "ci95": [
+          -7.939837261713463e-05,
+          0.00034832622693379964
+        ],
+        "ci99": [
+          -0.000132465238495105,
+          0.0004257101770846949
+        ],
+        "p_mean_le_zero": 0.12645,
+        "effective_observations": 56,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples whole monthly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (56), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+      },
+      "block_quarterly": {
+        "method": "quarterly_block_bootstrap",
+        "units": "mean daily return",
+        "point_estimate": 0.00012325537807331017,
+        "bootstrap_mean": 0.00012386672393602488,
+        "standard_error": 9.2693022217214e-05,
+        "ci90": [
+          -2.5267536716778616e-05,
+          0.0002799784534615712
+        ],
+        "ci95": [
+          -5.30590466983614e-05,
+          0.0003091814466324281
+        ],
+        "ci99": [
+          -0.00010503097095650487,
+          0.0003699619100461229
+        ],
+        "p_mean_le_zero": 0.08725,
+        "effective_observations": 19,
+        "resamples": 20000,
+        "assumptions": "PRIMARY. Resamples whole quarterly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (19), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+      },
+      "deflated_sharpe": {
+        "deflated_sharpe": null,
+        "reason": "insufficient_inputs: needs >= 2 trials, a positive spread of trial Sharpes and >= 30 observations. Run experiments.py, which supplies all three."
+      },
+      "dist_stop_risk_pct": {
+        "min": 0.13584418770808138,
+        "p10": 0.19492012997219846,
+        "p25": 0.2460316241543022,
+        "p50": 0.3152107726029801,
+        "p75": 0.4017658575163997,
+        "p90": 0.7404294165777727,
+        "p95": 0.8251771412959577,
+        "max": 0.9856654172918022
+      },
+      "dist_total_open_risk_pct": {
+        "min": 0.15406141464641224,
+        "p10": 0.2530710749657453,
+        "p25": 0.31925066995276796,
+        "p50": 0.607360373246124,
+        "p75": 0.9446105997355316,
+        "p90": 1.45148050265264,
+        "p95": 1.662607829220475,
+        "max": 1.9888471320972545
+      },
+      "dist_hold_hours": {
+        "min": 4.0,
+        "p10": 24.0,
+        "p25": 48.0,
+        "p50": 112.0,
+        "p75": 266.0,
+        "p90": 452.0,
+        "p95": 564.0,
+        "max": 1476.0
+      },
+      "dist_atr_at_entry": {
+        "min": 5.088062502921581,
+        "p10": 7.426349901988374,
+        "p25": 9.474071451611236,
+        "p50": 12.097910300212627,
+        "p75": 15.429155218994005,
+        "p90": 31.32907013004986,
+        "p95": 34.984639338667115,
+        "max": 44.06835638749058
+      },
+      "dist_stop_distance": {
+        "min": 12.720156257303952,
+        "p10": 18.565874754970935,
+        "p25": 23.685178629028087,
+        "p50": 30.244775750531566,
+        "p75": 38.57288804748501,
+        "p90": 78.32267532512465,
+        "p95": 87.46159834666778,
+        "max": 110.17089096872645
+      },
+      "notional": {
+        "bars_evaluated": 7084,
+        "cap_binding_bars": 0,
+        "cap_binding_pct": 0.0,
+        "intended_exposure_lot_bars": 88.64000000000523,
+        "executed_exposure_lot_bars": 88.64000000000523,
+        "exposure_shortfall_pct": 0.0,
+        "net_target_rounding_loss_lot_bars": 0.0,
+        "sizing_intended_lots": 0.8751978924704216,
+        "sizing_executed_lots": 2.6399999999999877,
+        "sizing_rounding_loss_lots": 0.0,
+        "sizing_rounding_loss_pct": 0.0,
+        "max_abs_position_lots": 0.03
+      },
+      "sizing_report": {
+        "override_enabled": true,
+        "target_risk_pct_per_sleeve": 0.1,
+        "override_max_risk_pct_per_sleeve": 1.0,
+        "max_total_open_risk_pct": 2.0,
+        "minimum_lot": 0.01,
+        "lot_step": 0.01,
+        "signals_evaluated": 566,
+        "by_reason": {
+          "ORDER_ACCEPTED_MINIMUM_OVERRIDE": 264,
+          "PORTFOLIO_OPEN_RISK_EXCEEDED": 228,
+          "OVERRIDE_SLEEVE_RISK_EXCEEDED": 74
+        },
+        "accepted": 264,
+        "accepted_normal": 0,
+        "accepted_override": 264,
+        "rejected": 302,
+        "accepted_max_stop_risk_pct": 0.9856654172918022,
+        "accepted_median_stop_risk_pct": 0.3152107726029801,
+        "accepted_max_total_open_risk_pct": 1.9888471320972545,
+        "override_stop_risk_pct_median": 0.3152107726029801,
+        "override_stop_risk_pct_max": 0.9856654172918022
+      },
+      "registry_index": 723,
+      "n_configs_tested": 723,
+      "override_rates": {
+        "by_year": [
+          {
+            "year": 2022,
+            "candidates": 41,
+            "accepted": 41,
+            "accept_pct": 100.0,
+            "rej_sleeve": 0,
+            "rej_portfolio": 0
+          },
+          {
+            "year": 2023,
+            "candidates": 91,
+            "accepted": 67,
+            "accept_pct": 73.62637362637363,
+            "rej_sleeve": 0,
+            "rej_portfolio": 24
+          },
+          {
+            "year": 2024,
+            "candidates": 88,
+            "accepted": 84,
+            "accept_pct": 95.45454545454545,
+            "rej_sleeve": 0,
+            "rej_portfolio": 4
+          },
+          {
+            "year": 2025,
+            "candidates": 189,
+            "accepted": 53,
+            "accept_pct": 28.04232804232804,
+            "rej_sleeve": 7,
+            "rej_portfolio": 129
+          },
+          {
+            "year": 2026,
+            "candidates": 157,
+            "accepted": 19,
+            "accept_pct": 12.101910828025478,
+            "rej_sleeve": 67,
+            "rej_portfolio": 71
+          }
+        ],
+        "by_sleeve": [
+          {
+            "sleeve": "fast",
+            "candidates": 245,
+            "accepted": 152,
+            "accept_pct": 62.04081632653061,
+            "rej_sleeve": 36,
+            "rej_portfolio": 57
+          },
+          {
+            "sleeve": "medium",
+            "candidates": 185,
+            "accepted": 76,
+            "accept_pct": 41.08108108108108,
+            "rej_sleeve": 23,
+            "rej_portfolio": 86
+          },
+          {
+            "sleeve": "slow",
+            "candidates": 136,
+            "accepted": 36,
+            "accept_pct": 26.47058823529412,
+            "rej_sleeve": 15,
+            "rej_portfolio": 85
+          }
+        ],
+        "by_direction": [
+          {
+            "direction": "long",
+            "candidates": 368,
+            "accepted": 146,
+            "accept_pct": 39.67391304347826,
+            "rej_sleeve": 38,
+            "rej_portfolio": 184
+          },
+          {
+            "direction": "short",
+            "candidates": 198,
+            "accepted": 118,
+            "accept_pct": 59.59595959595959,
+            "rej_sleeve": 36,
+            "rej_portfolio": 44
+          }
+        ]
+      },
+      "diagnostics": {
+        "1_accepted_atr": {
+          "p10": 7.442153191034468,
+          "p50": 12.099348882700465,
+          "p90": 31.525191982969638
+        },
+        "2_rejected_atr": {
+          "p10": 13.259691693275911,
+          "p50": 33.12428151699363,
+          "p90": 57.00434886480811
+        },
+        "volatility_separation": {
+          "accepted_median_atr": 12.099348882700465,
+          "rejected_median_atr": 33.12428151699363,
+          "ratio_rejected_over_accepted": 2.737691245878067,
+          "atr_threshold_implied": 40.0
+        },
+        "5_acts_as_volatility_filter": {
+          "implied_atr_ceiling": 40.0,
+          "pct_accepted_below_ceiling": 98.10606060606061,
+          "pct_rejected_above_ceiling": 32.78145695364238
+        },
+        "3_portfolio_cap_by_sleeve": [
+          {
+            "sleeve": "fast",
+            "candidates": 245,
+            "rej_portfolio": 57,
+            "rej_portfolio_pct": 23.26530612244898
+          },
+          {
+            "sleeve": "medium",
+            "candidates": 185,
+            "rej_portfolio": 86,
+            "rej_portfolio_pct": 46.48648648648649
+          },
+          {
+            "sleeve": "slow",
+            "candidates": 136,
+            "rej_portfolio": 85,
+            "rej_portfolio_pct": 62.5
+          }
+        ],
+        "3_open_risk_when_portfolio_rejected": {
+          "p10": 1.6837633486447285,
+          "p50": 2.873092896605727,
+          "p90": 9.16137158354076
+        },
+        "4_composition_shift": {
+          "sleeve": {
+            "candidates_pct": {
+              "fast": 43.29,
+              "medium": 32.69,
+              "slow": 24.03
+            },
+            "accepted_pct": {
+              "fast": 57.58,
+              "medium": 28.79,
+              "slow": 13.64
+            }
+          },
+          "direction": {
+            "candidates_pct": {
+              "long": 65.02,
+              "short": 34.98
+            },
+            "accepted_pct": {
+              "long": 55.3,
+              "short": 44.7
+            }
+          }
+        },
+        "6_cost_share_at_min_lot": {
+          "median_price_stop_loss": 30.248372206751164,
+          "median_estimated_costs": 0.2785,
+          "costs_as_pct_of_stop_risk": 0.8525101298700756
+        },
+        "6_realised_cost_share_of_gross": 30.321076802583082,
+        "7_top5_share_pct": 170.23768660380995,
+        "7_excl_top5_total": -1237.6669500000178,
+        "7_campaigns": 124
+      }
+    }
+  },
+  "target_050_comparison": {
+    "profile": "target_0.50pct_scenario",
+    "diagnostic_only": false,
+    "labels": [
+      "APPROXIMATE_INTRABAR_STOPS",
+      "FLAT_CARRY_ASSUMPTION",
+      "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+      "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+    ],
+    "config": {
+      "capital": 10000.0,
+      "risk_pct": 0.5,
+      "target_risk_pct_per_sleeve": 0.5,
+      "enable_min_lot_override": false,
+      "override_max_risk_pct_per_sleeve": 0.5,
+      "max_total_open_risk_pct": 1.0,
+      "minimum_lot": 0.01,
+      "lot_step": 0.01,
+      "contract_oz": 100.0
+    },
+    "starting_equity": 10000.0,
+    "ending_equity": 11145.024099999988,
+    "net_profit": 1145.0240999999878,
+    "return_pct": 11.450240999999878,
+    "cagr_pct": 2.355114180607387,
+    "max_dd_usd": 1185.09465000003,
+    "max_dd_pct": 10.941069390267847,
+    "ann_vol_pct": 7.480557581132659,
+    "sharpe_lo_adjusted": 0.29782581718108775,
+    "sharpe_naive": 0.289956418581305,
+    "sortino": 0.30887337490164857,
+    "calmar": 0.21525447802225592,
+    "exposure_pct": 57.09131279489314,
+    "signals": 672,
+    "sleeve_trades": 242,
+    "campaigns": 94,
+    "trades_override": 0,
+    "trades_normal": 242,
+    "skipped_below_minimum": 430,
+    "rejected_sleeve_cap": 0,
+    "rejected_portfolio_cap": 0,
+    "by_reason": {
+      "OVERRIDE_DISABLED": 430,
+      "ORDER_ACCEPTED_NORMAL_SIZE": 242
+    },
+    "avg_stop_risk_pct": 0.37034693619255765,
+    "max_stop_risk_pct": 0.5114629320480155,
+    "avg_total_open_risk_pct": 1.1738021479862706,
+    "max_total_open_risk_pct": 7.385092871631322,
+    "distinct_position_sizes": 3,
+    "corr_size_inv_atr": 0.8801848479036906,
+    "by_direction": {
+      "long": {
+        "trades": 138,
+        "gross": 3644.250000000001,
+        "win_pct": 42.028985507246375,
+        "mean_R": 0.7407602617534129
+      },
+      "short": {
+        "trades": 104,
+        "gross": -1340.0700000000008,
+        "win_pct": 23.076923076923077,
+        "mean_R": -0.3339860467346452
+      }
+    },
+    "by_sleeve": {
+      "fast": {
+        "trades": 130,
+        "gross": 495.0400000000004,
+        "win_pct": 32.30769230769231,
+        "mean_R": 0.1160726536336576
+      },
+      "medium": {
+        "trades": 74,
+        "gross": 904.4199999999994,
+        "win_pct": 33.78378378378378,
+        "mean_R": 0.36321477464594043
+      },
+      "slow": {
+        "trades": 38,
+        "gross": 904.7200000000005,
+        "win_pct": 39.473684210526315,
+        "mean_R": 0.6716586569840208
+      }
+    },
+    "yearly": [
+      {
+        "year": 2021,
+        "start_equity": 10000.0,
+        "end_equity": 10000.0,
+        "pnl": 0.0,
+        "return_pct": 0.0,
+        "max_dd_pct": 0.0,
+        "trades": 0,
+        "campaigns": 0
+      },
+      {
+        "year": 2022,
+        "start_equity": 10000.0,
+        "end_equity": 9516.1044,
+        "pnl": -483.8956,
+        "return_pct": -4.839,
+        "max_dd_pct": 7.6758,
+        "trades": 38,
+        "campaigns": 14
+      },
+      {
+        "year": 2023,
+        "start_equity": 9516.1044,
+        "end_equity": 10250.0832,
+        "pnl": 733.9788,
+        "return_pct": 7.713,
+        "max_dd_pct": 7.4256,
+        "trades": 79,
+        "campaigns": 26
+      },
+      {
+        "year": 2024,
+        "start_equity": 10250.0832,
+        "end_equity": 9790.5418,
+        "pnl": -459.5415,
+        "return_pct": -4.4833,
+        "max_dd_pct": 7.8735,
+        "trades": 86,
+        "campaigns": 37
+      },
+      {
+        "year": 2025,
+        "start_equity": 9790.5418,
+        "end_equity": 11145.0241,
+        "pnl": 1354.4823,
+        "return_pct": 13.8346,
+        "max_dd_pct": 8.03,
+        "trades": 39,
+        "campaigns": 17
+      },
+      {
+        "year": 2026,
+        "start_equity": 11145.0241,
+        "end_equity": 11145.0241,
+        "pnl": 0.0,
+        "return_pct": 0.0,
+        "max_dd_pct": 0.0,
+        "trades": 0,
+        "campaigns": 0
+      }
+    ],
+    "gross_profit": 2304.1800000000003,
+    "cost_spread_slip": 87.27000000001044,
+    "cost_commission": 25.82649999999984,
+    "cost_swap": -928.4493999999988,
+    "cost_waterfall": [
+      {
+        "component": "gross_price_pnl",
+        "usd": 2304.1800000000003
+      },
+      {
+        "component": "spread_and_slippage",
+        "usd": -87.27000000001044
+      },
+      {
+        "component": "commission",
+        "usd": -25.82649999999984
+      },
+      {
+        "component": "financing_swap",
+        "usd": -928.4493999999988
+      },
+      {
+        "component": "netting_and_lot_rounding",
+        "usd": -117.61000000000263
+      },
+      {
+        "component": "net_to_account",
+        "usd": 1145.0240999999887
+      }
+    ],
+    "concentration_campaigns": {
+      "campaign_net_n": 94,
+      "campaign_net_total": 1253.40919999999,
+      "campaign_net_mean": 13.334140425531809,
+      "campaign_net_median": -29.464975000000052,
+      "campaign_net_top1_sum": 1486.620349999999,
+      "campaign_net_top1_share_pct": 118.60614634071703,
+      "campaign_net_excl_top1_total": -233.21115000000896,
+      "campaign_net_excl_top1_mean": -2.5076467741936446,
+      "campaign_net_top3_sum": 2740.0700499999994,
+      "campaign_net_top3_share_pct": 218.60937752810665,
+      "campaign_net_excl_top3_total": -1486.6608500000093,
+      "campaign_net_excl_top3_mean": -16.33693241758252,
+      "campaign_net_top5_sum": 3370.709299999998,
+      "campaign_net_top5_share_pct": 268.92329336660566,
+      "campaign_net_excl_top5_total": -2117.300100000008,
+      "campaign_net_excl_top5_mean": -23.789888764045035,
+      "campaign_net_top10_sum": 4268.613549999996,
+      "campaign_net_top10_share_pct": 340.56025358678,
+      "campaign_net_excl_top10_total": -3015.2043500000063,
+      "campaign_net_excl_top10_mean": -35.895289880952454
+    },
+    "campaign_bootstrap_usd": {
+      "method": "campaign_bootstrap_usd",
+      "units": "net USD per campaign",
+      "point_estimate": 13.334140425531809,
+      "bootstrap_mean": 13.13391155284564,
+      "standard_error": 20.633284292148165,
+      "ci90": [
+        -17.361910558510765,
+        49.49758023936157
+      ],
+      "ci95": [
+        -21.622801861702087,
+        57.88818101063804
+      ],
+      "ci99": [
+        -28.800974654255377,
+        76.50343616755313
+      ],
+      "p_mean_le_zero": 0.28305,
+      "effective_observations": 94,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples campaign net P&L in dollars, so a campaign that risked three sleeves counts for what it actually made rather than being normalised away. This is the test of whether the average campaign is profitable after every modelled cost."
+    },
+    "p_mean_campaign_le_zero": 0.28305,
+    "block_monthly": {
+      "method": "monthly_block_bootstrap",
+      "units": "mean daily return",
+      "point_estimate": 8.607284465144664e-05,
+      "bootstrap_mean": 8.585501520636514e-05,
+      "standard_error": 0.00011268616371380915,
+      "ci90": [
+        -9.213926223886008e-05,
+        0.00027760418714098
+      ],
+      "ci95": [
+        -0.00012432654620980489,
+        0.00031860818026647624
+      ],
+      "ci99": [
+        -0.00018407939680960134,
+        0.00039959703892043373
+      ],
+      "p_mean_le_zero": 0.2266,
+      "effective_observations": 56,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples whole monthly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (56), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+    },
+    "block_quarterly": {
+      "method": "quarterly_block_bootstrap",
+      "units": "mean daily return",
+      "point_estimate": 8.607284465144664e-05,
+      "bootstrap_mean": 8.572235931164994e-05,
+      "standard_error": 9.144396787007709e-05,
+      "ci90": [
+        -6.009934311782451e-05,
+        0.00024192397132507068
+      ],
+      "ci95": [
+        -8.624630396589035e-05,
+        0.00027265176645755313
+      ],
+      "ci99": [
+        -0.00013386652022664403,
+        0.00033261282055906084
+      ],
+      "p_mean_le_zero": 0.174,
+      "effective_observations": 19,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples whole quarterly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (19), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+    },
+    "deflated_sharpe": {
+      "deflated_sharpe": null,
+      "reason": "insufficient_inputs: needs >= 2 trials, a positive spread of trial Sharpes and >= 30 observations. Run experiments.py, which supplies all three."
+    },
+    "dist_stop_risk_pct": {
+      "min": 0.25337696838880547,
+      "p10": 0.2764811318685255,
+      "p25": 0.30469825934273315,
+      "p50": 0.36785131760908,
+      "p75": 0.422693980972872,
+      "p90": 0.47063314672617124,
+      "p95": 0.4867251075649185,
+      "max": 0.5114629320480155
+    },
+    "dist_total_open_risk_pct": {
+      "min": 0.25337696838880547,
+      "p10": 0.300987725401701,
+      "p25": 0.3858758046654436,
+      "p50": 0.6679520184619128,
+      "p75": 1.4685360703154662,
+      "p90": 2.569591063468666,
+      "p95": 3.9595188401636685,
+      "max": 7.385092871631322
+    },
+    "dist_hold_hours": {
+      "min": 4.0,
+      "p10": 24.0,
+      "p25": 48.0,
+      "p50": 100.0,
+      "p75": 280.0,
+      "p90": 472.0,
+      "p95": 582.9999999999998,
+      "max": 1476.0
+    },
+    "dist_atr_at_entry": {
+      "min": 5.088062502921581,
+      "p10": 7.382194965237484,
+      "p25": 9.113609782822182,
+      "p50": 11.424806377884934,
+      "p75": 13.858982927825938,
+      "p90": 15.733367672920627,
+      "p95": 17.53500667767038,
+      "max": 19.238432080214608
+    },
+    "dist_stop_distance": {
+      "min": 12.720156257303952,
+      "p10": 18.45548741309371,
+      "p25": 22.78402445705545,
+      "p50": 28.562015944712332,
+      "p75": 34.64745731956484,
+      "p90": 39.33341918230157,
+      "p95": 43.83751669417596,
+      "max": 48.09608020053652
+    },
+    "notional": {
+      "bars_evaluated": 7084,
+      "cap_binding_bars": 47,
+      "cap_binding_pct": 0.6634669678147939,
+      "intended_exposure_lot_bars": 116.550000000003,
+      "executed_exposure_lot_bars": 115.91000000000285,
+      "exposure_shortfall_pct": 0.5491205491206519,
+      "net_target_rounding_loss_lot_bars": 0.22362933528277534,
+      "sizing_intended_lots": 4.472221522423816,
+      "sizing_executed_lots": 3.2999999999999803,
+      "sizing_rounding_loss_lots": 1.1722215224238146,
+      "sizing_rounding_loss_pct": 26.211168577993515,
+      "max_abs_position_lots": 0.08
+    },
+    "sizing_report": {
+      "override_enabled": false,
+      "target_risk_pct_per_sleeve": 0.5,
+      "override_max_risk_pct_per_sleeve": 0.5,
+      "max_total_open_risk_pct": 1.0,
+      "minimum_lot": 0.01,
+      "lot_step": 0.01,
+      "signals_evaluated": 672,
+      "by_reason": {
+        "OVERRIDE_DISABLED": 430,
+        "ORDER_ACCEPTED_NORMAL_SIZE": 242
+      },
+      "accepted": 242,
+      "accepted_normal": 242,
+      "accepted_override": 0,
+      "rejected": 430,
+      "accepted_max_stop_risk_pct": 0.5114629320480155,
+      "accepted_median_stop_risk_pct": 0.36785131760908,
+      "accepted_max_total_open_risk_pct": 7.385092871631322
+    },
+    "note": "NOT the override. This raises the SIZING TARGET to 0.50 %, which changes every position size. The override leaves the target at 0.10 % and only permits a single minimum lot."
+  },
+  "deflated_sharpe_at_723": {
+    "baseline_strict": {
+      "deflated_sharpe": 0.4702509730069791,
+      "expected_max_sharpe_under_null_per_period": 0.026460108773108254,
+      "observed_sharpe_per_period": 0.024276763022513564,
+      "n_observations": 1170,
+      "n_trials": 723,
+      "sr_trial_std_per_period": 0.008368899108177766,
+      "note": "Probability the true Sharpe exceeds zero AFTER deflating for the number of configurations examined. Below 0.95 is not evidence of skill."
+    },
+    "small_account_override": {
+      "deflated_sharpe": 0.32159793474613757,
+      "expected_max_sharpe_under_null_per_period": 0.026460108773108254,
+      "observed_sharpe_per_period": 0.012910951367672195,
+      "n_observations": 1170,
+      "n_trials": 723,
+      "sr_trial_std_per_period": 0.008368899108177766,
+      "note": "Probability the true Sharpe exceeds zero AFTER deflating for the number of configurations examined. Below 0.95 is not evidence of skill."
+    },
+    "small_account_override_stress": {
+      "deflated_sharpe": 0.5219988817034981,
+      "expected_max_sharpe_under_null_per_period": 0.026460108773108254,
+      "observed_sharpe_per_period": 0.028074055198666827,
+      "n_observations": 1170,
+      "n_trials": 723,
+      "sr_trial_std_per_period": 0.008368899108177766,
+      "note": "Probability the true Sharpe exceeds zero AFTER deflating for the number of configurations examined. Below 0.95 is not evidence of skill."
+    }
+  }
+}

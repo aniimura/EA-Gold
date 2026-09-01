@@ -1,0 +1,26 @@
+{
+  "prior_configurations": 720,
+  "prior_source": "experiments.py --suite grid (720 cells)",
+  "post_hoc_profiles": [
+    {
+      "index": 721,
+      "name": "baseline_strict",
+      "post_hoc": true,
+      "diagnostic_only": false
+    },
+    {
+      "index": 722,
+      "name": "small_account_override",
+      "post_hoc": true,
+      "diagnostic_only": false
+    },
+    {
+      "index": 723,
+      "name": "small_account_override_stress",
+      "post_hoc": true,
+      "diagnostic_only": true
+    }
+  ],
+  "note": "The profiles below were specified AFTER the 2022-2026 results were known. They are appended to the prior count, never substituted for it.",
+  "total_configurations_examined": 723
+}

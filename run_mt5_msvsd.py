@@ -62,7 +62,8 @@ def bars_csv():
     return os.path.join(config.COMMON_FILES, "fxtrade_%s_bars.csv" % NAME)
 
 
-def run_tester(model=1, write_bars=True, clear_cache=False, risk=None):
+def run_tester(model=1, write_bars=True, clear_cache=False, risk=None,
+               selftest=False, extra=None):
     spec = TesterSpec()
     report_name = "%s_%s_%s" % (spec.name, spec.symbol, spec.timeframe)
     # Delete the PREVIOUS report as well as the CSVs. _find_report() only checks
@@ -85,6 +86,12 @@ def run_tester(model=1, write_bars=True, clear_cache=False, risk=None):
         leverage=int(spec.leverage), report=report_name)
     ini += "\n[TesterInputs]\nInpWriteTrades=true\nInpWriteBars=%s\n" % (
         "true" if write_bars else "false")
+    if risk is not None:
+        ini += "InpRiskPct=%s\n" % risk
+    if selftest:
+        ini += "InpSizingSelfTest=true\n"
+    for k, v in (extra or {}).items():
+        ini += "%s=%s\n" % (k, v)
     with open(config.TESTER_INI, "w", encoding="utf-8") as fh:
         fh.write(ini)
 
@@ -188,30 +195,31 @@ def parse_deal_costs(report_path):
             "deal_rows": n}
 
 
-def load_mt5_outputs():
+def load_mt5_outputs(suffix=""):
     tr = bars = None
     if os.path.isfile(trades_csv()):
         tr = pd.read_csv(trades_csv())
         for c in ("entry_time", "exit_time"):
             tr[c] = pd.to_datetime(tr[c], format="%Y.%m.%d %H:%M:%S", errors="coerce")
         os.makedirs(OUTDIR, exist_ok=True)
-        tr.to_csv(os.path.join(OUTDIR, "mt5_trades.csv"), index=False)
+        tr.to_csv(os.path.join(OUTDIR, "mt5_trades%s.csv" % suffix), index=False)
     if os.path.isfile(bars_csv()):
         bars = pd.read_csv(bars_csv())
         for c in ("time", "time_utc"):
             bars[c] = pd.to_datetime(bars[c], format="%Y.%m.%d %H:%M:%S",
                                      errors="coerce")
-        bars.to_csv(os.path.join(OUTDIR, "mt5_bars.csv"), index=False)
+        bars.to_csv(os.path.join(OUTDIR, "mt5_bars%s.csv" % suffix), index=False)
     return tr, bars
 
 
-def compare(stats):
+def compare(stats, tag=""):
     """Signal-level reconciliation first, then the P&L difference explained."""
     print("\n" + "=" * 76)
     print("MT5 vs PYTHON")
     print("=" * 76)
 
-    mt5_tr, mt5_bars = load_mt5_outputs()
+    suffix = ("_" + tag) if tag else ""
+    mt5_tr, mt5_bars = load_mt5_outputs(suffix)
     if mt5_tr is None:
         print("  no MT5 trade CSV found - did the tester run?")
         return {}
@@ -228,8 +236,8 @@ def compare(stats):
     # ---------- 1. bar-by-bar signal reconciliation ----------
     if mt5_bars is not None and len(mt5_bars):
         from msvsd.reconcile import reconcile
-        p = os.path.join(OUTDIR, "mt5_bars.csv")
-        rep = reconcile(py, p, OUTDIR, "mt5")
+        p = os.path.join(OUTDIR, "mt5_bars%s.csv" % suffix)
+        rep = reconcile(py, p, OUTDIR, "mt5" + suffix)
         out["reconcile"] = rep
         print("\n  -- bar-by-bar signal reconciliation --")
         print("     overlapping bars : %s" % rep.get("overlapping_bars"))
@@ -372,10 +380,12 @@ def compare(stats):
      WHAT to trade. The P&L gap then tells you what the cost assumptions are
      worth.""")
 
-    with open(os.path.join(OUTDIR, "mt5_comparison.json"), "w",
-              encoding="utf-8") as fh:
+    # Tag-scoped, so a $10k override run cannot overwrite the $100k
+    # reconciliation the published report is built from.
+    name = "mt5_comparison%s.json" % (("_" + tag) if tag else "")
+    with open(os.path.join(OUTDIR, name), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2, default=str)
-    print("\n  written: %s" % os.path.join(OUTDIR, "mt5_comparison.json"))
+    print("\n  written: %s" % os.path.join(OUTDIR, name))
     return out
 
 
@@ -393,6 +403,13 @@ def main(argv=None):
     ap.add_argument("--risk", type=float, default=None,
                     help="risk %% per sleeve passed to the EA")
     ap.add_argument("--tag", default=None, help="suffix for the saved outputs")
+    ap.add_argument("--ea-profile", default=None,
+                    choices=("baseline_strict","small_account_override",
+                             "small_account_override_stress"),
+                    help="drive the EA with one of the predeclared profiles")
+    ap.add_argument("--sizing-selftest", action="store_true",
+                    help="run the EA sizing-parity table and export it for "
+                         "tests/test_min_lot_override.py")
     a = ap.parse_args(argv)
 
     stats = {}
@@ -402,12 +419,41 @@ def main(argv=None):
         if a.compile_only:
             return 0
         print("== MT5 Strategy Tester ==")
+        extra = {}
+        if a.ea_profile:
+            # mirror msvsd.config.PROFILES onto the EA inputs
+            EA_PROFILES = {
+                "baseline_strict": dict(deposit=100000.0, ov="false",
+                                        sleeve=0.50, total=1.00),
+                "small_account_override": dict(deposit=10000.0, ov="true",
+                                               sleeve=0.50, total=1.00),
+                "small_account_override_stress": dict(deposit=10000.0, ov="true",
+                                                      sleeve=1.00, total=2.00),
+            }
+            pf = EA_PROFILES[a.ea_profile]
+            TesterSpec.deposit = pf["deposit"]
+            extra["InpEnableMinLotOverride"] = pf["ov"]
+            extra["InpOverrideMaxRiskPct"] = pf["sleeve"]
+            extra["InpMaxTotalOpenRiskPct"] = pf["total"]
         if a.deposit is not None:
             TesterSpec.deposit = a.deposit
         if a.leverage is not None:
             TesterSpec.leverage = a.leverage
         stats = run_tester(model=a.model, write_bars=not a.no_bars,
-                           clear_cache=a.clear_cache, risk=a.risk)
+                           clear_cache=a.clear_cache, risk=a.risk,
+                           selftest=a.sizing_selftest, extra=extra)
+        if a.sizing_selftest:
+            src = os.path.join(config.COMMON_FILES, "fxtrade_XauMsvsd_sizing.csv")
+            dst = os.path.join(OUTDIR, "mql5_sizing_selftest.csv")
+            if os.path.isfile(src):
+                os.makedirs(OUTDIR, exist_ok=True)
+                shutil.copy2(src, dst)
+                with open(dst, encoding="utf-8") as fh:
+                    rows = sum(1 for _ in fh) - 1
+                print("  sizing self test -> %s (%d rows)" % (dst, rows))
+            else:
+                print("  !! the EA wrote no sizing self-test file")
+            return 0
         for k in sorted(stats):
             print("      %-22s %s" % (k, stats[k]))
     else:
@@ -415,7 +461,7 @@ def main(argv=None):
         if os.path.isfile(p):
             stats = mt5run.parse_report(p)
 
-    compare(stats)
+    compare(stats, tag=(a.tag or a.ea_profile or ""))
     return 0
 
 

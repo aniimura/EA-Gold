@@ -380,3 +380,231 @@ volatility at all. The fix is granularity, not risk: with a 0.001 lot step, or a
 Note that swap and commission are quoted **per standard lot**; a micro contract
 must carry them pro rata (`rate × contract_oz / 100`) or the carry is inflated
 by the contract-size ratio.
+
+---
+
+## Minimum-lot override for small accounts (additive, off by default)
+
+### Why
+
+At 0.10 % per sleeve a $10,000 account wants 0.003–0.008 lots for every entry
+in the record. The broker minimum is 0.01. Every size rounds down to zero on
+**100 % of bars**, and the account takes no trades at all. The override lets
+one minimum-size position through when — and only when — its real stop risk
+passes a gate.
+
+### What it is not
+
+The 0.50 % and 1.00 % values are **permission limits**. The sizing target stays
+0.10 %; nothing reads the caps as a target. A normally-sized position is placed
+without consulting them at all, which is what keeps the disabled path
+bit-identical to the published baseline.
+
+### Files
+
+| File | Change |
+|---|---|
+| `msvsd/sizing.py` | **new** — `CostModel`, `sleeve_open_risk`, `total_open_risk`, `decide`, the stable labels |
+| `msvsd/config.py` | six settings, `effective_target_risk_pct()`, validation, the three profiles, `apply_profile()` |
+| `msvsd/sleeves.py` | `phase_exit_entry(..., decide_fn=)`; `Sleeve.raw_lots` / `.decision` promoted to real fields |
+| `msvsd/engine.py` | builds the decider per bar, logs every verdict, exports `res.sizing` |
+| `msvsd/reporting.py` | `sizing_report()`, writes `<tag>_sizing_log.csv` |
+| `bt_xau_msvsd.py` | `--profile`, `--enable-min-lot-override`, `--override-max-risk-pct`, `--max-total-open-risk-pct`, `--minimum-lot` |
+| `build/XauMsvsd.mq5` | same gate, `OrderCalcProfit` cross-check, sizing CSV, `InpSizingSelfTest` parity table |
+| `XAU_MultiSpeed_VolScaled_Donchian.pine` | same inputs and gate, previous-bar open-risk carriers |
+| `tests/test_min_lot_override.py`, `tests/parity_cases.py` | **new** — 37 tests |
+| `run_mt5_msvsd.py` | `--sizing-selftest` |
+
+### Baseline reproduction
+
+| Run | Published | Now | Diff |
+|---|---:|---:|---:|
+| `v1_golden` (`--v1-compat`) | 3,546.6098 | 3,546.6098 | 5e-05 |
+| `baseline` | 3,624.4719 | 3,624.4718 | 5e-05 |
+| `ltf_m1` | 2,795.9022 | 2,795.9022 | 5e-05 |
+| `best_model` | 2,701.6360 | 2,701.6360 | 3e-05 |
+
+All four inside the declared 1e-3 USD tolerance; the residual is JSON decimal
+rounding, not engine drift. `--v1-compat` still matches the frozen fixture and
+the trade count exactly.
+
+### Profile results — the override is NOT an improvement
+
+| Profile | Trades | Return | Max DD | **Sharpe** | Override used | Rejected |
+|---|---:|---:|---:|---:|---:|---:|
+| `baseline_strict` | 306 | +3.62 % | 2.61 % | **0.385** | 0 | 71 |
+| `small_account_override` | 194 | +4.66 % | 7.62 % | **0.205** | 194 | 674 |
+| `small_account_override_stress` | 263 | +17.87 % | 11.60 % | **0.446** | 264 | 302 |
+
+The override account returns more and is **worse risk-adjusted** — Sharpe 0.205
+against 0.385, drawdown 7.62 % against 2.61 %. That is the arithmetic working as
+intended, not a finding: a 0.01 lot on $10,000 carries a median 0.29 % of equity
+against a 0.10 % target, so the account is running roughly three times the
+nominal risk. The higher return is bought with that risk, not earned by a better
+signal. The stress profile's +17.87 % is the same effect doubled and is
+diagnostic only.
+
+Rejection counts show the gate is load-bearing: 674 of 868 candidate entries are
+refused at $10,000 — 463 by the per-sleeve cap and 211 by the portfolio cap.
+Observed maxima sit just under both limits (0.494 % against 0.50 %; 0.989 %
+against 1.00 %) and neither is ever breached.
+
+### Python / MQL5 parity
+
+14 shared cases in `tests/parity_cases.py`, duplicated in the EA's
+`SizingSelfTest()`. Both sides agree on reason, final lots and actual stop risk
+for every row, covering all five outcomes. The test **skips with instructions**
+when the EA export is absent rather than passing vacuously.
+
+### Known parity limitations
+
+1. **Pine open-risk timing.** Pine gives each sleeve call site isolated state
+   and the tuple outputs do not exist yet at the point the gate needs them, so
+   the Pine carriers hold the PREVIOUS bar's figures. Python evaluates the same
+   quantity from the current in-loop state, so a sleeve that exited earlier in
+   the same bar still counts in Pine but not in Python. The Pine figure can only
+   be equal or larger, so its gate is the more conservative of the two.
+2. **Pine cost terms.** TradingView has no bid/ask series, so the Pine gate uses
+   the informational spread and slippage inputs where Python and MQL5 use the
+   real per-bar spread.
+3. **Pine cannot read the broker minimum.** `minimumLot` must be stated by hand
+   to match the broker; MQL5 reads `SYMBOL_VOLUME_MIN` directly.
+4. **MQL5 commission in the gate** comes from `InpCommissionPerLotRT` because
+   the tester applies commission broker-side and does not expose a per-symbol
+   figure the EA can read at init.
+
+### Assumptions
+
+- Swap is excluded from the entry gate by design (holding period unknown at
+  entry) and applied normally everywhere else.
+- The gate is evaluated at signal time using the exact stop **distance**, which
+  is known then; the entry price is the signal bar's close, used only to price
+  costs and to value open risk. The actual fill is the next bar's open.
+- A boundary value sitting exactly on a cap is admitted (`1e-9` tolerance), so a
+  $50.00 risk on $10,000 passes the 0.50 % cap rather than failing on float
+  noise.
+
+---
+
+## Audit of the minimum-lot override (post-hoc experiment)
+
+Three predeclared profiles only. No parameter search, no new configurations.
+
+### Registry
+
+The two small-account profiles were specified **after** the 2022-2026 results
+were known. They are appended to the existing registry as configurations
+**721-723**, behind the 720 grid cells. The multiple-testing count carries
+forward and is **not** reset. Deflated Sharpe at 723 trials, using the grid's
+trial-Sharpe dispersion (0.008369/day):
+
+| Profile | DSR | Threshold |
+|---|---:|---:|
+| `baseline_strict` | 0.470 | 0.95 |
+| `small_account_override` | 0.322 | 0.95 |
+| `small_account_override_stress` | 0.522 | 0.95 |
+
+None clears deflation. This is not independent confirmation of anything.
+
+### Verification sequence
+
+| Step | Result |
+|---|---|
+| 1. Full test suite | **108 tests, 0 failures, 0 errors** |
+| 2. Override disabled reproduces baseline | v1_golden / baseline / ltf_m1 / best_model all within **5e-05 USD** |
+| 3. Python vs MQL5 | **868/868 signals, 100 % reason agreement, 194/194 trades, lots identical** |
+| 4. Pine | **NOT reconciled** - no TradingView export exists |
+| 5. Unreconciled differences | see below |
+| 6. No lookahead introduced | lookahead audit with the override ON still yields **0 trades** |
+| 7. Decision-time information only | decision price == signal-bar close on **100 %** of rows; stop distance == ATR x 2.5 exactly; the fill price is never consulted |
+| 8. Portfolio risk checked before acceptance | no accepted trade exceeds either cap; `after == before + own risk` holds identically |
+
+### Unreconciled differences
+
+1. **Cost term, Python vs MQL5: up to 1.62 USD.** The stop-risk *arithmetic*
+   agrees to **5e-10 USD**; the whole residual is the spread assumption. MT5's
+   tester spread reached 185 points on 2026-03-02 where the H4 cache column
+   carries 23. It flipped no decision here, but **34 of 868 decisions sit
+   closer to a cap than that error is large** - the gate is spread-model
+   sensitive precisely at the boundary.
+2. **Pine is unreconciled**, and additionally uses previous-bar open-risk
+   carriers and informational spread inputs (documented earlier).
+
+### Results
+
+| Metric | `baseline_strict` | `small_account_override` | `stress` (diagnostic) |
+|---|---:|---:|---:|
+| Starting / ending equity | 100,000 / 103,624 | 10,000 / 10,466 | 10,000 / 11,787 |
+| Net return | +3.62 % | +4.66 % | +17.87 % |
+| Max drawdown | 2.61 % | 7.62 % | 11.60 % |
+| Annualised volatility | 2.04 % | 4.43 % | 6.94 % |
+| **Sharpe** | **0.385** | **0.205** | 0.446 |
+| Sortino / Calmar | 0.362 / 0.294 | 0.210 / 0.129 | 0.511 / 0.310 |
+| Signals / trades / campaigns | 378 / 306 / 122 | 868 / 194 / 98 | 868 / 263 / 116 |
+| Override / normal trades | 0 / 307 | 194 / 0 | 264 / 0 |
+| Rejected: sleeve / total cap | 0 / 0 | 463 / 211 | 74 / 228 |
+| Avg / max risk per sleeve | 0.085 / 0.102 % | 0.297 / **0.494 %** | 0.374 / **0.986 %** |
+| Max total open risk | — | **0.989 %** | **1.989 %** |
+| Distinct sizes, corr(size,1/ATR) | 7, +0.98 | **1, +0.00** | **1, n/a** |
+| P(mean campaign <= 0) | 0.238 | 0.384 | 0.175 |
+
+Both caps hold on every one of 868 evaluated signals and are never breached.
+
+### Override versus the earlier 0.5 %-TARGET scenario
+
+These are different rules. The 0.5 %-target run raises the sizing target and
+rescales every position; the override leaves the target at 0.10 % and only
+decides whether one minimum lot may be placed.
+
+| | Override | 0.5 % TARGET |
+|---|---:|---:|
+| Trades | 194 | 242 |
+| Net return | +4.66 % | +11.45 % |
+| Max drawdown | 7.62 % | 10.94 % |
+| Sharpe | 0.205 | 0.298 |
+| Avg risk / sleeve | 0.297 % | 0.370 % |
+| **Max total open risk** | **0.989 %** | **7.385 %** |
+| Distinct sizes / corr | 1 / +0.00 | 3 / +0.88 |
+
+**It does not retain similar participation** - 20 % fewer trades. It does cut
+exposure: lower average risk, lower drawdown, and peak combined exposure
+**7.5x lower**, because the 0.5 %-target scenario has no portfolio cap at all.
+But it is worse risk-adjusted than both the 0.5 % scenario and the control.
+
+### Diagnostics
+
+1/2/5. **It is an unintended volatility filter.** Accepted median ATR 11.22,
+rejected 28.49 (2.54x). The 0.50 % cap on a fixed 0.01 lot implies an exact ATR
+ceiling of 20.00, and **100 % of accepted trades fall below it**.
+
+3. **The portfolio cap falls hardest on the slow sleeve**: 41.2 % of its
+candidates rejected against 18.9 % fast and 15.8 % medium. It signals last,
+when open risk is already a median 1.63 % - above the 1.00 % limit on its own.
+
+4. **Composition shifts.** Slow sleeve 27.6 % of candidates -> 12.9 % of
+accepted; shorts 29.6 % -> 43.8 %. The gate performs trade selection.
+
+6. **Costs are disproportionate.** The gate's own cost term is trivial at one
+ounce (median $0.28 against a $28.05 stop), but realised costs consume
+**54.3 % of gross profit** - carry dominates, because a minimum lot held for
+weeks pays the same per-lot swap as a fully sized one.
+
+7. **Still a handful of campaigns.** 98 campaigns; top five = 418 % of net;
+excluding them leaves **-$1,498.69**. Concentration is worse than the control's.
+
+8. **Real MT5 spread makes it worse.** The cross-check already showed the
+Python model understates spread by 1.49x; applied here it widens an already
+54 % cost share.
+
+### Classification: OPERATIONALLY QUESTIONABLE
+
+The caps work exactly as specified, never breach, and the two implementations
+agree on every decision. Drawdown is proportionate to the ~3x nominal risk a
+minimum lot carries on $10,000.
+
+What makes it questionable is the **discretisation**, not the caps. Every
+accepted position is the same 0.01 lot: one distinct size, `corr(size, 1/ATR)`
+= **0.00**. The volatility scaling the strategy is named for is gone, and the
+cap silently converts into an ATR ceiling that selects which trades are taken.
+Nothing breaches a limit and the platforms agree, so it is not *unacceptable* -
+but it is no longer the strategy that was tested.

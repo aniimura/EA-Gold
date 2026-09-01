@@ -1,0 +1,21 @@
+{
+  "signals": {
+    "python": 868,
+    "mql5": 868,
+    "matched": 868
+  },
+  "sizing": {
+    "reason_agree_pct": 100.0,
+    "max_lot_diff": 0.0,
+    "max_risk_diff": 1.6200001862538471,
+    "max_open_risk_diff": 1.6200001862538471
+  },
+  "trades": {
+    "python": 194,
+    "mql5": 194,
+    "matched": 194,
+    "python_only": 0,
+    "mql5_only": 0,
+    "max_lot_diff": 0.0
+  }
+}

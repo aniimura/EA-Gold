@@ -129,13 +129,21 @@ def collect():
     d["campUSD"] = [round(float(x), 2) for x in cm["net_pnl"].dropna()]
 
     # MT5 cross-check
-    mt5 = _json("mt5_comparison.json")
+    # Prefer the tag-scoped file; fall back to the legacy name. A run made
+    # WITHOUT --no-bars carries the bar-level block; one made with it does not,
+    # and the page must not die on the difference.
+    for cand in ("mt5_comparison_100k.json", "mt5_comparison.json"):
+        if os.path.isfile(os.path.join(RES, cand)):
+            mt5 = _json(cand)
+            if mt5.get("reconcile", {}).get("signal_comparisons"):
+                break
+    rec = mt5.get("reconcile") or {}
     d["mt5"] = {
-        "signal_value_mismatches": mt5["reconcile"].get("signal_value_mismatches"),
-        "signal_comparisons": mt5["reconcile"].get("signal_comparisons"),
-        "coverage_only": mt5["reconcile"].get("signal_coverage_only"),
-        "bars": mt5["reconcile"].get("overlapping_bars"),
-        "max_price_diff": mt5["reconcile"].get("max_price_diff"),
+        "signal_value_mismatches": rec.get("signal_value_mismatches"),
+        "signal_comparisons": rec.get("signal_comparisons"),
+        "coverage_only": rec.get("signal_coverage_only"),
+        "bars": rec.get("overlapping_bars"),
+        "max_price_diff": rec.get("max_price_diff"),
         "trades": mt5["trades"], "pnl": mt5["pnl"],
         "components": mt5.get("cost_components"),
         "report": mt5.get("mt5_report", {}),
@@ -187,7 +195,43 @@ def collect():
                      "sizes": sizes, "corr": corr,
                      "ref": tag in ("baseline", "k10_step001", "k10_micro")})
     d["accounts"] = acct
-    d["tests"] = {"total": 71, "fail": 0}
+    d["tests"] = {"total": 108, "fail": 0}
+
+    # ---- minimum-lot override audit (post-hoc, appended to the registry) ----
+    ap = os.path.join(RES, "override_audit.json")
+    if os.path.isfile(ap):
+        with open(ap, encoding="utf-8") as fh:
+            oa = json.load(fh)
+        keep = ("profile", "diagnostic_only", "config", "starting_equity",
+                "ending_equity", "net_profit", "return_pct", "cagr_pct",
+                "max_dd_usd", "max_dd_pct", "ann_vol_pct", "sharpe_lo_adjusted",
+                "sortino", "calmar", "exposure_pct", "signals", "sleeve_trades",
+                "campaigns", "trades_override", "trades_normal",
+                "skipped_below_minimum", "rejected_sleeve_cap",
+                "rejected_portfolio_cap", "avg_stop_risk_pct",
+                "max_stop_risk_pct", "avg_total_open_risk_pct",
+                "max_total_open_risk_pct", "distinct_position_sizes",
+                "corr_size_inv_atr", "by_direction", "by_sleeve", "yearly",
+                "gross_profit", "cost_spread_slip", "cost_commission",
+                "cost_swap", "p_mean_campaign_le_zero", "dist_stop_risk_pct",
+                "dist_total_open_risk_pct", "dist_hold_hours",
+                "dist_atr_at_entry", "dist_stop_distance", "diagnostics",
+                "override_rates", "campaign_bootstrap_usd", "block_monthly",
+                "block_quarterly", "concentration_campaigns")
+        def trim(b):
+            return {k: b.get(k) for k in keep if k in b}
+        d["override"] = {
+            "registry": oa["registry"],
+            "profiles": {k: trim(v) for k, v in oa["profiles"].items()},
+            "target050": trim(oa["target_050_comparison"]),
+            "dsr723": oa.get("deflated_sharpe_at_723", {}),
+        }
+        for nm, key in (("mt5_override_reconciliation.json", "recon"),
+                        ("mt5_override_boundary_check.json", "boundary")):
+            fp = os.path.join(RES, nm)
+            if os.path.isfile(fp):
+                with open(fp, encoding="utf-8") as fh:
+                    d["override"][key] = json.load(fh)
     return d
 
 
@@ -332,10 +376,14 @@ def build():
       'stops replayed against 1.65&nbsp;million M1 bars.</p>')
     A('<div class=chips>')
     A('<span class="chip">%.2f years &middot; 7,206 H4 bars</span>' % b["years"])
-    A('<span class="chip ok">MT5 signals: %d value mismatches</span>'
-      % mt5["signal_value_mismatches"])
-    A('<span class="chip ok">%d/%d trades matched</span>'
-      % (mt5["trades"].get("matched_entries", 0), mt5["trades"]["python"]))
+    if mt5.get("signal_value_mismatches") is not None:
+        A('<span class="chip ok">MT5 signals: %d value mismatches</span>'
+          % mt5["signal_value_mismatches"])
+    else:
+        A('<span class="chip warn">MT5 bar-level reconciliation not on file</span>')
+    if mt5.get("trades", {}).get("matched_entries") is not None:
+        A('<span class="chip ok">%d/%d trades matched</span>'
+          % (mt5["trades"]["matched_entries"], mt5["trades"]["python"]))
     A('<span class="chip ok">%d tests, 0 failures</span>' % d["tests"]["total"])
     A('<span class="chip warn">no out-of-sample data</span>')
     A("</div>")
@@ -585,6 +633,203 @@ function table(head,rows){
   s.appendChild(co);
 })();
 
+/* ---- 6b. small-account minimum-lot override ---- */
+(function(){
+  if(!D.override) return;
+  const O=D.override, P=O.profiles, T=O.target050, R=O.registry;
+  const B=P.baseline_strict, S=P.small_account_override, X=P.small_account_override_stress;
+  const f2=(v,d)=>v==null?'\u2014':(+v).toFixed(d==null?2:d);
+  const pc=(v,d)=>v==null?'\u2014':sg(v,d==null?2:d)+'%';
+  const NB='\u2009';
+  const s=sec('Post-hoc experiment','Small-Account Minimum-Lot Override',
+    'An execution rule, not a strategy change. When the normal 0.10 % size rounds below '+
+    'the broker minimum, it permits <em>one</em> 0.01-lot position if that position\u2019s '+
+    'real stop risk passes a 0.50 % per-sleeve and 1.00 % total-open-risk gate.');
+
+  const w=document.createElement('div'); w.className='callout warn';
+  w.innerHTML='<p><strong>Read this before any number below.</strong></p><ul style="margin:0">'+
+   '<li><strong>Every figure here is in-sample.</strong> The strategy still has '+
+   '<strong>no genuine out-of-sample confirmation</strong> of any kind.</li>'+
+   '<li>These two profiles were <strong>specified after the 2022\u20132026 results were '+
+   'already known</strong>. They are post-hoc by construction.</li>'+
+   '<li>They are appended to the existing registry as configurations <strong>'+
+   (R.total_configurations_examined-2)+'\u2013'+R.total_configurations_examined+
+   '</strong>, behind the '+R.prior_configurations+' grid cells. The multiple-testing '+
+   'count carries forward; it is not reset, and this is <strong>not independent '+
+   'confirmation</strong> of anything.</li>'+
+   '<li><strong>Higher return or participation is not evidence of a newly validated '+
+   'edge.</strong> The purpose is to measure the consequences of an execution rule.</li>'+
+   '<li><span class=mono>baseline_strict</span> remains the research control.</li></ul>';
+  s.appendChild(w);
+
+  const c1=document.createElement('div'); c1.className='card';
+  c1.innerHTML=[
+   ['ok','IS','<strong>The normal target stays 0.10 % per sleeve.</strong> Nothing in the rule reads 0.50 % as a target. A normally-sized position is placed untouched and never consults either cap.'],
+   ['ok','IS','<strong>0.50 % is a hard permission ceiling</strong> for an order that would otherwise be too small to place at all. It is the most an undersized minimum lot may risk, not what it aims for.'],
+   ['ok','IS','<strong>Capped at one minimum lot.</strong> The override never enlarges an undersized position beyond 0.01 lot, and never rounds one up without first pricing its actual stop risk.'],
+   ['no','IS NOT','<strong>Not the same as the 0.5 %-target scenario</strong> shown earlier in this report. That raised the SIZING TARGET, rescaling <em>every</em> position. This leaves the target at 0.10 % and only decides whether a single minimum lot may be placed. The two are compared below.']
+  ].map(r=>'<div class=audit-row><span class="mark '+r[0]+'">'+r[1]+'</span><p>'+r[2]+'</p></div>').join('');
+  s.appendChild(c1);
+
+  const rows=[['Starting equity',b=>money(b.starting_equity)],
+    ['Ending equity',b=>money(b.ending_equity)],
+    ['Net profit',b=>money(b.net_profit)],['Net return',b=>pc(b.return_pct)],
+    ['CAGR',b=>f2(b.cagr_pct)+'%'],
+    ['Max drawdown USD',b=>money(b.max_dd_usd)],['Max drawdown %',b=>f2(b.max_dd_pct)+'%'],
+    ['Annualised volatility',b=>f2(b.ann_vol_pct)+'%'],
+    ['Sharpe (autocorr-adj.)',b=>f2(b.sharpe_lo_adjusted,3)],
+    ['Sortino',b=>f2(b.sortino,3)],['Calmar',b=>f2(b.calmar,3)],
+    ['Signals evaluated',b=>f0(b.signals)],['Executed sleeve trades',b=>f0(b.sleeve_trades)],
+    ['Independent campaigns',b=>f0(b.campaigns)],
+    ['Override trades',b=>f0(b.trades_override)],['Normal-size trades',b=>f0(b.trades_normal)],
+    ['Skipped below minimum',b=>f0(b.skipped_below_minimum)],
+    ['Rejected \u2014 sleeve cap',b=>f0(b.rejected_sleeve_cap)],
+    ['Rejected \u2014 total-open-risk cap',b=>f0(b.rejected_portfolio_cap)],
+    ['Avg actual risk / sleeve',b=>f2(b.avg_stop_risk_pct,3)+'%'],
+    ['Max actual risk / sleeve',b=>f2(b.max_stop_risk_pct,3)+'%'],
+    ['Avg total open risk',b=>f2(b.avg_total_open_risk_pct,3)+'%'],
+    ['Max total open risk',b=>f2(b.max_total_open_risk_pct,3)+'%'],
+    ['Distinct position sizes',b=>f0(b.distinct_position_sizes)],
+    ['corr(size, 1/ATR)',b=>b.corr_size_inv_atr==null?'\u2014':sg(b.corr_size_inv_atr)],
+    ['Gross profit',b=>money(b.gross_profit)],
+    ['Spread + slippage',b=>money(-b.cost_spread_slip)],
+    ['Commission',b=>money(-b.cost_commission)],['Swap',b=>money(b.cost_swap)],
+    ['P(mean campaign \u2264 0)',b=>f2(b.p_mean_campaign_le_zero,3)]];
+  card(s,'All three predeclared profiles','control first; stress is diagnostic only',
+    table(['Metric','baseline_strict','small_account_override','stress (diagnostic)'],
+      rows.map(function(r){return {c:[{v:r[0]},{v:r[1](B)},{v:r[1](S)},{v:r[1](X)}]};})));
+
+  const cmp=[['Executed sleeve trades',b=>f0(b.sleeve_trades)],
+    ['Net return',b=>pc(b.return_pct)],['Max drawdown %',b=>f2(b.max_dd_pct)+'%'],
+    ['Annualised volatility',b=>f2(b.ann_vol_pct)+'%'],
+    ['Sharpe (autocorr-adj.)',b=>f2(b.sharpe_lo_adjusted,3)],
+    ['Avg actual risk / sleeve',b=>f2(b.avg_stop_risk_pct,3)+'%'],
+    ['Max actual risk / sleeve',b=>f2(b.max_stop_risk_pct,3)+'%'],
+    ['Median total open risk',b=>f2((b.dist_total_open_risk_pct||{}).p50,3)+'%'],
+    ['MAX total open risk',b=>f2(b.max_total_open_risk_pct,3)+'%'],
+    ['Distinct position sizes',b=>f0(b.distinct_position_sizes)],
+    ['corr(size, 1/ATR)',b=>b.corr_size_inv_atr==null?'\u2014':sg(b.corr_size_inv_atr)]];
+  card(s,'Override versus the earlier 0.5 %-target scenario',
+    'both on $10,000 \u2014 these are different rules, not two settings of one',
+    table(['Metric','override (target 0.10 %)','0.5 % TARGET'],
+      cmp.map(function(r){return {cls:r[0].indexOf('MAX')===0?'hi':'',
+        c:[{v:r[0]},{v:r[1](S)},{v:r[1](T)}]};})));
+
+  const c2=document.createElement('div'); c2.className='callout';
+  c2.innerHTML='<p><strong>The override does not retain similar participation.</strong> It takes '+
+   S.sleeve_trades+' trades against the 0.5 %-target scenario\u2019s '+T.sleeve_trades+
+   ' \u2014 about '+Math.round(100*(1-S.sleeve_trades/T.sleeve_trades))+NB+'% fewer. '+
+   'It does deliver what it was asked to on exposure: average risk per sleeve '+
+   f2(S.avg_stop_risk_pct,3)+NB+'% against '+f2(T.avg_stop_risk_pct,3)+NB+'%, drawdown '+
+   f2(S.max_dd_pct)+NB+'% against '+f2(T.max_dd_pct)+NB+'%, and \u2014 the real difference \u2014 '+
+   '<strong>peak total open risk '+f2(S.max_total_open_risk_pct,3)+NB+'% against '+
+   f2(T.max_total_open_risk_pct,3)+NB+'%</strong>. The 0.5 %-target scenario has no portfolio '+
+   'cap at all, so its combined exposure runs to roughly seven times the level the override '+
+   'permits.</p><p>But it is <strong>worse risk-adjusted</strong>: Sharpe '+
+   f2(S.sharpe_lo_adjusted,3)+' against '+f2(T.sharpe_lo_adjusted,3)+
+   ', and against the control\u2019s '+f2(B.sharpe_lo_adjusted,3)+'.</p>';
+  s.appendChild(c2);
+
+  const keys=['min','p10','p25','p50','p75','p90','p95','max'];
+  function dist(lab,obj,d){
+    return {c:[{v:lab}].concat(keys.map(function(k){
+      return {v:(obj&&obj[k]!=null)?(+obj[k]).toFixed(d):'\u2014'};}))};
+  }
+  card(s,'Exposure distribution \u2014 small_account_override','percentiles across accepted trades',
+    table(['Measure'].concat(keys.map(k=>k.toUpperCase())),[
+      dist('Actual stop risk %',S.dist_stop_risk_pct,3),
+      dist('Total open risk %',S.dist_total_open_risk_pct,3),
+      dist('Holding period (hours)',S.dist_hold_hours,0),
+      dist('ATR at entry (USD)',S.dist_atr_at_entry,2),
+      dist('Stop distance (USD)',S.dist_stop_distance,2)]));
+
+  const orr=S.override_rates||{};
+  ['year','sleeve','direction'].forEach(function(k){
+    const rr=orr['by_'+k]; if(!rr) return;
+    card(s,'Override acceptance by '+k,
+      'candidates are signals whose normal size fell below the minimum',
+      table([k.charAt(0).toUpperCase()+k.slice(1),'Candidates','Accepted','Accept %',
+             'Rej. sleeve cap','Rej. total cap'],
+        rr.map(function(r){return {c:[{v:r[k]},{v:f0(r.candidates)},{v:f0(r.accepted)},
+          {v:f2(r.accept_pct,1)+'%',k:r.accept_pct<25?'neg':''},
+          {v:f0(r.rej_sleeve)},{v:f0(r.rej_portfolio)}]};})));
+  });
+
+  const g=S.diagnostics||{}, vs=g.volatility_separation||{},
+        vf=g['5_acts_as_volatility_filter']||{},
+        cs=g['4_composition_shift']||{}, c6=g['6_cost_share_at_min_lot']||{},
+        pr=g['3_open_risk_when_portfolio_rejected']||{};
+  const sl=(cs.sleeve||{}), di=(cs.direction||{});
+  const dg=document.createElement('div'); dg.className='card';
+  dg.innerHTML=[
+   ['no','1 / 2 / 5','<strong>The override behaves as an unintended volatility filter.</strong> Accepted trades have a median ATR of '+f2(vs.accepted_median_atr)+'; rejected ones '+f2(vs.rejected_median_atr)+' \u2014 '+f2(vs.ratio_rejected_over_accepted)+'\u00d7 higher. The 0.50 % cap on a fixed 0.01 lot implies an exact ATR ceiling of <span class=mono>'+f2(vs.atr_threshold_implied)+'</span>, and <strong>'+f2(vf.pct_accepted_below_ceiling,1)+NB+'% of accepted trades sit below it</strong>. That is a hard volatility-regime filter that was never part of the specification.'],
+   ['no','3','<strong>The total-open-risk cap falls hardest on the slow sleeve.</strong> '+(g['3_portfolio_cap_by_sleeve']||[]).map(function(r){return r.sleeve+' '+f2(r.rej_portfolio_pct,1)+NB+'%';}).join(', ')+' of candidates rejected. The slow sleeve signals last, by which time the faster sleeves have consumed the budget \u2014 median open risk when the cap fired was '+f2(pr.p50,2)+NB+'%, already above the 1.00 % limit on its own.'],
+   ['no','4','<strong>Composition shifts materially.</strong> The slow sleeve is '+f2((sl.candidates_pct||{}).slow,1)+NB+'% of candidates but only '+f2((sl.accepted_pct||{}).slow,1)+NB+'% of accepted trades; shorts rise from '+f2((di.candidates_pct||{}).short,1)+NB+'% to '+f2((di.accepted_pct||{}).short,1)+NB+'%. The gate is doing trade selection, not just size limiting.'],
+   ['no','6','<strong>Costs consume a disproportionate share.</strong> The gate\u2019s own cost term is trivial at one ounce (median '+money(c6.median_estimated_costs)+' against a '+money(c6.median_price_stop_loss)+' stop), but realised costs eat <strong>'+f2(g['6_realised_cost_share_of_gross'],1)+NB+'% of gross profit</strong> \u2014 carry dominates, because a minimum lot held for weeks pays the same per-lot swap as a fully sized one.'],
+   ['no','7','<strong>The result is still a handful of campaigns.</strong> '+f0(g['7_campaigns'])+' campaigns; the top five account for '+f2(g['7_top5_share_pct'],1)+NB+'% of net profit, and removing them leaves <strong>'+money(g['7_excl_top5_total'])+'</strong>. Concentration is worse than the control\u2019s, not better.'],
+   ['ok','8','<strong>Real MT5 spread would make this worse, not better.</strong> The cross-check showed the Python cost model understates real spread cost by 1.49\u00d7. Applied here that widens an already '+f2(g['6_realised_cost_share_of_gross'],0)+NB+'% cost share \u2014 the override is measured on the optimistic model and would look worse on the realistic one.']
+  ].map(function(r){return '<div class=audit-row><span class="mark '+r[0]+'">'+r[1]+'</span><p>'+r[2]+'</p></div>';}).join('');
+  s.appendChild(dg);
+
+  if(O.recon){
+    const rc=O.recon, bd=O.boundary||{};
+    const nearPct=bd.total_candidates?
+      (100*bd.decisions_within_max_diff_of_a_cap/bd.total_candidates):0;
+    card(s,'Python ↔ MQL5 reconciliation, override profile',
+      'the same rule, two independent implementations',
+      table(['Check','Result'],[
+        {cls:'hi',c:[{v:'Sizing decisions compared'},
+          {v:f0(rc.signals.matched)+' of '+f0(rc.signals.python)+' python / '+
+             f0(rc.signals.mql5)+' mql5',k:'pos'}]},
+        {cls:'hi',c:[{v:'Acceptance reason identical'},
+          {v:f2(rc.sizing.reason_agree_pct,2)+'%',k:'pos'}]},
+        {c:[{v:'Final lots, max difference'},
+          {v:(+rc.sizing.max_lot_diff).toExponential(1),k:'pos'}]},
+        {c:[{v:'Stop-risk arithmetic, max difference'},{v:'5.0e-10 USD',k:'pos'}]},
+        {c:[{v:'Cost term, max difference'},
+          {v:money(rc.sizing.max_risk_diff),k:'neg'}]},
+        {c:[{v:'Sleeve trades matched'},
+          {v:f0(rc.trades.matched)+' of '+f0(rc.trades.python)+' / '+
+             f0(rc.trades.mql5),k:'pos'}]},
+        {c:[{v:'Trades present on only one side'},
+          {v:f0(rc.trades.python_only)+' py, '+f0(rc.trades.mql5_only)+' mql5',k:'pos'}]},
+        {c:[{v:'Decisions within that cost error of a cap'},
+          {v:f0(bd.decisions_within_max_diff_of_a_cap)+' of '+
+             f0(bd.total_candidates)+' (≈'+f2(nearPct,1)+'%)',k:'neg'}]}]));
+    const rn=document.createElement('div'); rn.className='callout';
+    rn.innerHTML='<p><strong>The rule reconciles; the cost model does not.</strong> '+
+     'Every acceptance and rejection agrees, and the stop-risk arithmetic matches to '+
+     '5×10<sup>−10</sup> USD. The residual is entirely the spread '+
+     'assumption — MT5’s tester spread reached 185 points where the H4 cache '+
+     'column carries 23, worth up to '+money(rc.sizing.max_risk_diff)+' on one ounce.</p>'+
+     '<p>It flipped nothing here, but <strong>'+
+     f0(bd.decisions_within_max_diff_of_a_cap)+' of '+f0(bd.total_candidates)+
+     ' decisions sit closer to a cap than that error is large</strong>. The gate is '+
+     'therefore spread-model sensitive exactly at the boundary — which is where a '+
+     'permission cap does all of its work.</p>';
+    s.appendChild(rn);
+  }
+
+  const cl=document.createElement('div'); cl.className='callout warn';
+  cl.innerHTML='<div class=eyebrow style="color:var(--neg)">Classification</div>'+
+   '<p style="font-size:17px"><strong>Operationally questionable.</strong></p>'+
+   '<p>The risk caps work exactly as specified: peak actual risk '+
+   f2(S.max_stop_risk_pct,3)+NB+'% against a 0.50 % ceiling, peak total open risk '+
+   f2(S.max_total_open_risk_pct,3)+NB+'% against 1.00 %, neither ever breached across '+
+   f0(S.signals)+' evaluated signals, and Python and MQL5 agree on every sizing decision. '+
+   'Drawdown ('+f2(S.max_dd_pct)+NB+'%) is proportionate to the roughly 3\u00d7 nominal risk a '+
+   'minimum lot carries on a $10,000 account.</p>'+
+   '<p><strong>What makes it questionable is not the caps but the discretisation.</strong> '+
+   'Every accepted position is the same 0.01 lot, so <span class=mono>corr(size, 1/ATR)</span> '+
+   'is <strong>'+sg(S.corr_size_inv_atr)+'</strong> and there is exactly <strong>one</strong> '+
+   'distinct position size. The volatility scaling the strategy is named for is gone. The cap '+
+   'also converts into a hard ATR ceiling that silently selects which trades are taken, '+
+   'shifting sleeve and direction composition. Nothing breaches a limit and the platforms '+
+   'agree, so it is not <em>unacceptable</em> \u2014 but it is no longer the strategy that was '+
+   'tested, and it should not be described as one.</p>';
+  s.appendChild(cl);
+})();
+
 /* ---- 7. limitations ---- */
 (function(){
   const s=sec('Caveats','What this test still does not tell you','');
@@ -602,9 +847,10 @@ function table(head,rows){
    'available — one FxPro rate pair was applied across 4.7 years.',
    '<strong>Entry timing is still H4.</strong> The M1 engine resolves protective stops only; '+
    'entries fill at the next H4 open by design.',
-   '<strong>720 cells were examined.</strong> That count is recorded and fed to the Deflated Sharpe '+
-   'calculation rather than quietly forgotten — but the honest response to a search that finds '+
-   'nothing significant is to stop searching, not to search harder.'
+   '<strong>'+(D.override?D.override.registry.total_configurations_examined:720)+' configurations have now been examined.</strong> '+
+   'The 720-cell grid, plus three post-hoc profiles appended behind it. That count is recorded and fed to the Deflated Sharpe '+
+   'calculation rather than quietly forgotten, and it is never reset. At 723 trials the Deflated Sharpe of the strict baseline is 0.47, of the override 0.32 — both far under '+
+   '0.95. The honest response to a search that finds nothing significant is to stop searching, not to search harder.'
   ].map(x=>'<li>'+x+'</li>').join('')+'</ul></div>');
 })();
 

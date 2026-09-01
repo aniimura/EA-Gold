@@ -29,6 +29,7 @@ from .config import RunConfig
 from .dataio import index_ltf
 from .financing import ChargeEvent, FinancingModel, attribute as attribute_financing
 from .indicators import donchian, floor_step, pine_atr
+from .sizing import CostModel, decide as size_decide, total_open_risk
 from .sleeves import (EV_ENTRY_LONG, EV_ENTRY_SHORT, EV_EXIT_CHANNEL,
                       EV_EXIT_DIRECTION, EV_EXIT_END, EV_EXIT_STOP,
                       EV_EXIT_STOP_GAP, EV_NONE, Sleeve, phase_exit_entry,
@@ -156,6 +157,7 @@ class EngineResult:
     fills: pd.DataFrame
     financing: pd.DataFrame
     sleeve_financing: pd.DataFrame
+    sizing: pd.DataFrame
     equity: pd.Series
     diagnostics: Dict
     sleeve_costs: Dict
@@ -227,6 +229,7 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
     pending_delta = 0.0
     pending_attr: Dict[str, float] = {}
     trades: List[dict] = []
+    sizing_log: List[dict] = []
     charges: List[ChargeEvent] = []
     charge_sleeve_rows: List[dict] = []
 
@@ -254,6 +257,8 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
                 sizing_intended_lots=0.0, sizing_executed_lots=0.0,
                 sizing_rounding_loss_lots=0.0, entries_refused_unsizable=0,
                 intended_exposure_lots=0.0, executed_exposure_lots=0.0,
+                override_accepted=0, override_rejected_sleeve=0,
+                override_rejected_portfolio=0, override_disabled_skips=0,
                 stops_h4_approx=0, stops_ltf_exact=0, stops_ltf_gap=0,
                 ltf_ambiguous_events=0, ltf_missing_h4_bars=0,
                 ambiguity_log=[], trades_near_events=0)
@@ -390,7 +395,45 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
                                         note=REASON_CODES[reason])
 
         # ---- 5. close-of-bar evaluation -----------------------------------
-        risk_cash = eq * cfg.risk_pct / 100.0
+        # The NORMAL target. The override caps never feed this number.
+        risk_cash = eq * cfg.effective_target_risk_pct() / 100.0
+        cost_model = CostModel(
+            spread_price=spread_price,
+            entry_slip_price=slip_price,
+            stop_slip_price=cfg.stop_exit_slippage_points * cfg.point * cost_scale,
+            commission_per_oz_side=(led.comm_per_oz_side if cfg.use_costs else 0.0))
+
+        def make_decider(bar_i, equity_now):
+            def _decide(name, direction, atr_now, rcash):
+                # gross open risk EXCLUDING this sleeve - it is flat or about to
+                # be replaced, so counting its old position would double-count
+                others = [x for x in sleeves if x.name != name]
+                d = size_decide(
+                    sleeve_name=name, direction=direction, atr=atr_now,
+                    atr_mult=cfg.atr_mult, equity=equity_now, risk_cash=rcash,
+                    price=c[bar_i], contract_oz=cfg.contract_oz,
+                    lot_step=cfg.lot_step, minimum_lot=cfg.minimum_lot,
+                    costs=cost_model, sleeves=others,
+                    enable_override=cfg.enable_min_lot_override,
+                    override_max_risk_pct=cfg.override_max_risk_pct_per_sleeve,
+                    max_total_open_risk_pct=cfg.max_total_open_risk_pct,
+                    tick_size=cfg.tick_size, tick_value=cfg.tick_value,
+                    when=t[bar_i])
+                row = d.to_dict()
+                row["bar"] = bar_i
+                sizing_log.append(row)
+                if d.reason == "ORDER_ACCEPTED_MINIMUM_OVERRIDE":
+                    diag["override_accepted"] += 1
+                elif d.reason == "OVERRIDE_SLEEVE_RISK_EXCEEDED":
+                    diag["override_rejected_sleeve"] += 1
+                elif d.reason == "PORTFOLIO_OPEN_RISK_EXCEEDED":
+                    diag["override_rejected_portfolio"] += 1
+                elif d.reason == "OVERRIDE_DISABLED":
+                    diag["override_disabled_skips"] += 1
+                return d
+            return _decide
+
+        decider = make_decider(i, eq)
         blocked = bool(friday_block[i] or entry_event_block[i])
         for nm in order:
             s = by_name[nm]
@@ -409,7 +452,7 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
                 s, c[i], eh[i], el[i], xh[i], xl[i], atr[i], risk_cash,
                 cfg.contract_oz, cfg.lot_step, cfg.atr_mult, blocked,
                 cfg.allow_reversal, cfg.direction_mode, slow_confirmed_short, prior,
-                v1_compat=cfg.v1_compat)
+                v1_compat=cfg.v1_compat, decide_fn=decider)
 
             # DEFECT-V1-TRADELOG (fixed here, reproducible with v1_compat):
             # v1 snapshotted the sleeve BEFORE registering this bar's fill, so a
@@ -510,6 +553,19 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
         "attribution": ";".join("%s=%.4f" % (k, v) for k, v in sorted(f.attribution.items())),
         "note": f.note} for f in led.fills])
 
+    SIZING_COLS = ["time", "bar", "sleeve", "direction", "equity", "atr",
+                   "entry_price", "stop_price", "stop_distance", "raw_lots",
+                   "rounded_lots", "final_lots", "minimum_lot", "lot_step",
+                   "override_considered", "override_used", "price_stop_loss",
+                   "estimated_entry_cost", "estimated_exit_cost",
+                   "estimated_costs", "actual_stop_risk", "actual_stop_risk_pct",
+                   "total_open_risk_before", "total_open_risk_after",
+                   "total_open_risk_pct_before", "total_open_risk_pct_after",
+                   "condition", "reason"]
+    sizing_df = pd.DataFrame(sizing_log, columns=None if sizing_log else SIZING_COLS)
+    if len(sizing_df):
+        sizing_df = sizing_df[[c for c in SIZING_COLS if c in sizing_df.columns]]
+
     fin_df = attribute_financing(charges)
     sleeve_fin = pd.DataFrame(charge_sleeve_rows)
 
@@ -532,5 +588,6 @@ def run_engine(h4: pd.DataFrame, cfg: RunConfig,
 
     return EngineResult(config=cfg, bars=bars, trades=tr, fills=fills_df,
                         financing=fin_df, sleeve_financing=sleeve_fin,
+                        sizing=sizing_df,
                         equity=eq_series, diagnostics=diag,
                         sleeve_costs=dict(led.sleeve_costs))

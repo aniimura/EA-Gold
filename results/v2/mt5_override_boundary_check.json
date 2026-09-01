@@ -1,0 +1,6 @@
+{
+  "max_cost_diff_usd": 1.62,
+  "decisions_within_max_diff_of_a_cap": 34,
+  "total_candidates": 868,
+  "observed_reason_disagreements": 0
+}

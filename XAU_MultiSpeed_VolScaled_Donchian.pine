@@ -69,6 +69,20 @@ lotStep      = input.float(0.01, "Minimum lot increment",        minval = 0.001,
 maxNotionalX = input.float(1.5,  "Max net notional (x equity)",  minval = 0.1,   step = 0.1,   group = GR,
                  tooltip = "abs(net lots) * ounces per lot * price  <=  equity * this multiple.")
 
+// --- 1.2b Minimum-lot override (OFF by default) -----------------------------------------------
+// Lets a small account trade the broker minimum when the normal 0.10 % size rounds below
+// it. The two caps are PERMISSION limits, NOT sizing targets - the target stays riskPct.
+// Mirrors msvsd/sizing.py and the MQL5 EA.
+var string GO = "Minimum-lot override (small accounts)"
+enableMinLotOverride = input.bool(false, "Enable minimum-lot override", group = GO,
+                 tooltip = "When the normal size rounds below the broker minimum, test ONE minimum-lot position and place it only if it passes both caps below. It is never made larger than the minimum.")
+minimumLot   = input.float(0.01, "Broker minimum lot", minval = 0.001, step = 0.001, group = GO,
+                 tooltip = "Pine cannot read SYMBOL_VOLUME_MIN, so state it here to match your broker.")
+overrideMaxRiskPct = input.float(0.50, "Override: max risk % per sleeve", minval = 0.0, step = 0.05, group = GO,
+                 tooltip = "A PERMISSION cap on the override, not a sizing target.")
+maxTotalOpenRiskPct = input.float(1.00, "Override: max total open risk %", minval = 0.0, step = 0.05, group = GO)
+stopExitSlipPts = input.int(5, "Assumed stop-exit slippage (ticks)", minval = 0, group = GO)
+
 // --- 1.3 Behaviour ---------------------------------------------------------------------------
 var string GB = "Behaviour"
 allowReversal = input.bool(true, "Allow a sleeve to reverse on its exit bar", group = GB,
@@ -197,6 +211,32 @@ sExLo  = ta.lowest(low[1],   slowExitLen)
 riskCash = strategy.equity * riskPct / 100.0
 
 // =============================================================================================
+// 2.6 MINIMUM-LOT OVERRIDE HELPERS
+//
+//    PARITY NOTE: TradingView has no bid/ask series, so the cost terms use the
+//    informational spread and slippage inputs rather than a per-bar spread. The Python
+//    and MQL5 gates use the real per-bar spread. This is the one term that cannot be
+//    identical across all three, and it is stated rather than hidden.
+// =============================================================================================
+moneyPerPricePerLot = contractOz          // USD per 1.0 of price, per lot
+
+// Round-trip cost of one position taken to its stop. Direction-symmetric: a long pays the
+// spread entering and a short pays it exiting, so the total is the same either way.
+costRoundTrip(float lots) =>
+    oz = lots * contractOz
+    (infoSpread + (infoSlipTicks + stopExitSlipPts) * syminfo.mintick) * oz + infoCommOz * 2.0 * oz
+
+// Capital still at risk in ONE open sleeve, from here to its stop. GROSS - opposing
+// sleeves never net each other out - and a stop that locks in a profit contributes zero
+// rather than a negative, so a winner can never finance a new position.
+sleeveRiskAt(int dir, float lots, float stopPx, float px) =>
+    float r = 0.0
+    if dir != 0 and lots > 0 and not na(stopPx)
+        adverse = dir == 1 ? px - stopPx : stopPx - px
+        r := adverse <= 0 ? 0.0 : adverse * moneyPerPricePerLot * lots + costRoundTrip(lots) * 0.5
+    r
+
+// =============================================================================================
 // 3. SLEEVE ENGINE
 //    Pine gives every CALL SITE of a function its own copy of the function's `var` variables.
 //    Calling sleeveStep() three times therefore produces three genuinely independent state
@@ -205,7 +245,7 @@ riskCash = strategy.equity * riskPct / 100.0
 //    Event codes:  exitEv 0 = none, 3 = channel exit, 4 = protective stop
 //                  entEv  0 = none, 1 = long entry,   2 = short entry
 // =============================================================================================
-sleeveStep(bool enabled, float entHi, float entLo, float exHi, float exLo, float atrNow, float mult, float rCash, float cOz, float lStep, bool blocked, bool ok, bool allowRev) =>
+sleeveStep(bool enabled, float entHi, float entLo, float exHi, float exLo, float atrNow, float mult, float rCash, float cOz, float lStep, bool blocked, bool ok, bool allowRev, float openRiskOthers) =>
     var int   dir     = 0     // -1 short, 0 flat, +1 long  (this is the TARGET state)
     var float lots    = 0.0   // sleeve size in lots, frozen at entry
     var float entryPx = na    // ACTUAL fill price (recorded at the next bar's open)
@@ -261,8 +301,21 @@ sleeveStep(bool enabled, float entHi, float entLo, float exHi, float exLo, float
             riskPerLot   = stopDist * cOz                // USD lost per lot if the stop is hit
             rawLots      = riskPerLot > 0 ? rCash / riskPerLot : 0.0
             lots        := math.max(0.0, math.floor(rawLots / lStep + 1e-9) * lStep)  // round DOWN
-            if lots <= 0
-                dir    := 0                              // risk budget below one lot increment
+
+            // ---- minimum-lot override ------------------------------------------------
+            // Consulted ONLY when the normal size rounds below the broker minimum. A
+            // normally-sized position is placed untouched and never sees these caps.
+            if lots < minimumLot and enableMinLotOverride
+                testLots   = minimumLot                  // exactly one minimum position
+                priceLoss  = stopDist * moneyPerPricePerLot * testLots
+                riskUsd    = priceLoss + costRoundTrip(testLots)
+                riskPct    = strategy.equity > 0 ? 100.0 * riskUsd / strategy.equity : 0.0
+                totalPct   = strategy.equity > 0 ? 100.0 * (openRiskOthers + riskUsd) / strategy.equity : 0.0
+                if riskPct <= overrideMaxRiskPct + 1e-9 and totalPct <= maxTotalOpenRiskPct + 1e-9
+                    lots := testLots
+
+            if lots < minimumLot
+                dir    := 0                              // below the minimum, or gated out
                 atrEnt := na
             else
                 pending := 1
@@ -282,10 +335,30 @@ sleeveStep(bool enabled, float entHi, float entLo, float exHi, float exLo, float
 
     [dir, lots, entryPx, stopPx, atrEnt, exitEv, entEv]
 
+// --- 3.0 Gross open risk carried by the other sleeves ------------------------------------------
+// Pine gives each sleeve call site its own isolated state, so a sleeve cannot see its
+// siblings mid-bar, and the tuple outputs below do not exist yet at this point in the
+// script. These `var` carriers hold the PREVIOUS bar's figures and are refreshed at the
+// end of section 3.1.
+//
+// PARITY NOTE: the Python engine evaluates the same quantity from the current in-loop
+// state, so a sleeve that exits earlier in the same bar still counts here but not there.
+// The Pine figure can therefore only be equal or larger, never smaller - the gate is the
+// more conservative of the two, which is the right direction for a difference to fall in.
+var float riskFastPrev = 0.0
+var float riskMedPrev  = 0.0
+var float riskSlowPrev = 0.0
+openRiskAll = riskFastPrev + riskMedPrev + riskSlowPrev
+
 // --- 3.1 Three independent instances --------------------------------------------------------------
-[fDir, fLots, fEntry, fStop, fAtrE, fXev, fNev] = sleeveStep(useFast, fEntHi, fEntLo, fExHi, fExLo, atrVal, atrMult, riskCash, contractOz, lotStep, entriesBlocked, canSignal, allowReversal)
-[mDir, mLots, mEntry, mStop, mAtrE, mXev, mNev] = sleeveStep(useMed,  mEntHi, mEntLo, mExHi, mExLo, atrVal, atrMult, riskCash, contractOz, lotStep, entriesBlocked, canSignal, allowReversal)
-[sDir, sLots, sEntry, sStop, sAtrE, sXev, sNev] = sleeveStep(useSlow, sEntHi, sEntLo, sExHi, sExLo, atrVal, atrMult, riskCash, contractOz, lotStep, entriesBlocked, canSignal, allowReversal)
+[fDir, fLots, fEntry, fStop, fAtrE, fXev, fNev] = sleeveStep(useFast, fEntHi, fEntLo, fExHi, fExLo, atrVal, atrMult, riskCash, contractOz, lotStep, entriesBlocked, canSignal, allowReversal, openRiskAll - riskFastPrev)
+[mDir, mLots, mEntry, mStop, mAtrE, mXev, mNev] = sleeveStep(useMed,  mEntHi, mEntLo, mExHi, mExLo, atrVal, atrMult, riskCash, contractOz, lotStep, entriesBlocked, canSignal, allowReversal, openRiskAll - riskMedPrev)
+[sDir, sLots, sEntry, sStop, sAtrE, sXev, sNev] = sleeveStep(useSlow, sEntHi, sEntLo, sExHi, sExLo, atrVal, atrMult, riskCash, contractOz, lotStep, entriesBlocked, canSignal, allowReversal, openRiskAll - riskSlowPrev)
+
+// Refresh the carriers now that this bar's sleeve states are known.
+riskFastPrev := sleeveRiskAt(fDir, fLots, fStop, close)
+riskMedPrev  := sleeveRiskAt(mDir, mLots, mStop, close)
+riskSlowPrev := sleeveRiskAt(sDir, sLots, sStop, close)
 
 // =============================================================================================
 // 4. NETTING -> ONE BROKER POSITION

@@ -18,6 +18,7 @@ MODULES = [
     ("financing         ", "tests.test_financing"),
     ("campaigns / stats ", "tests.test_analysis"),
     ("pine reconciliation", "tests.test_reconcile"),
+    ("min-lot override ", "tests.test_min_lot_override"),
 ]
 
 

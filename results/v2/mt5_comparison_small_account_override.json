@@ -1,0 +1,46 @@
+{
+  "mt5_report": {
+    "bars": 7204,
+    "total_net_profit": 453.3,
+    "gross_profit": 3455.28,
+    "max_dd": 591.07,
+    "max_dd_pct": 5.91,
+    "max_eq_dd": 852.78,
+    "max_eq_dd_pct": 8.35,
+    "gross_loss": -3001.98,
+    "profit_factor": 1.15,
+    "expected_payoff": 2.78,
+    "recovery_factor": 0.53,
+    "sharpe_ratio": 0.28,
+    "total_trades": 163,
+    "total_deals": 294,
+    "profit_trades": 60,
+    "win_rate": 36.81,
+    "elapsed_s": 612.7
+  },
+  "trades": {
+    "python": 307,
+    "mt5": 194,
+    "matched_entries": 180
+  },
+  "pnl": {
+    "python_gross": 6276.490000000005,
+    "python_net": 3624.471849999977,
+    "mt5_gross": 1019.75,
+    "mt5_net": 453.3,
+    "python_costs": 2652.0181500000203,
+    "mt5_costs": 566.45
+  },
+  "cost_components": {
+    "python": {
+      "swap": -2362.1133999999824,
+      "commission": -66.2147499999998,
+      "spread_slip": -223.69000000003825
+    },
+    "mt5": {
+      "swap": -495.61,
+      "commission": -14.789999999999912,
+      "spread_slip": -56.05000000000012
+    }
+  }
+}

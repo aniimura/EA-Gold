@@ -49,6 +49,8 @@ class Sleeve:
     pending: int = 0
     entry_time: object = None
     entry_bar: int = -1
+    raw_lots: float = 0.0      # size before the lot-step floor, for rounding stats
+    decision: object = None    # the SizingDecision that opened this sleeve
 
     def reset(self) -> None:
         self.pending = 0
@@ -59,6 +61,8 @@ class Sleeve:
         self.atr_ent = np.nan
         self.entry_time = None
         self.entry_bar = -1
+        self.raw_lots = 0.0
+        self.decision = None
 
     def snapshot(self) -> dict:
         return dict(dir=self.dir, lots=self.lots, entry_px=self.entry_px,
@@ -145,7 +149,8 @@ def phase_exit_entry(sl: Sleeve, close: float, ent_hi: float, ent_lo: float,
                      risk_cash: float, contract_oz: float, lot_step: float,
                      atr_mult: float, entries_blocked: bool, allow_rev: bool,
                      direction_mode: str, slow_short_confirmed: bool,
-                     prior_exit_ev: int, v1_compat: bool = False) -> (int, int):
+                     prior_exit_ev: int, v1_compat: bool = False,
+                     decide_fn=None) -> (int, int):
     """Channel exit, direction gate, then entry. Returns (exit_ev, entry_ev).
 
     DEFECT-V1-EXIT-SWALLOW (fixed here, reproducible with v1_compat=True):
@@ -185,19 +190,30 @@ def phase_exit_entry(sl: Sleeve, close: float, ent_hi: float, ent_lo: float,
 
     entry_ev = EV_NONE
     unsized = False
+    sl.decision = None
     if new_dir != 0:
-        stop_dist = atr_now * atr_mult
-        risk_per_lot = stop_dist * contract_oz
-        raw = (risk_cash / risk_per_lot) if risk_per_lot > 0 else 0.0
-        lots = floor_step(raw, lot_step)
+        # `decide_fn` owns sizing when the engine supplies one - it needs equity,
+        # gross open risk and the cost model, none of which belong inside a
+        # sleeve state machine. The inline path below is the same arithmetic and
+        # keeps this function usable on its own in unit tests.
+        if decide_fn is not None:
+            dec = decide_fn(sl.name, new_dir, atr_now, risk_cash)
+            lots, raw = dec.final_lots, dec.raw_lots
+        else:
+            dec = None
+            stop_dist = atr_now * atr_mult
+            risk_per_lot = stop_dist * contract_oz
+            raw = (risk_cash / risk_per_lot) if risk_per_lot > 0 else 0.0
+            lots = floor_step(raw, lot_step)
         if lots <= 0:
-            new_dir = 0          # risk budget below one lot increment
+            new_dir = 0          # below the broker minimum, or gated by the override
             unsized = True       # see DEFECT-V1-EXIT-SWALLOW above
         else:
             sl.reset()
             sl.dir = new_dir
             sl.lots = lots
             sl.raw_lots = raw
+            sl.decision = dec
             sl.atr_ent = atr_now
             sl.pending = 1
             entry_ev = EV_ENTRY_LONG if new_dir == 1 else EV_ENTRY_SHORT

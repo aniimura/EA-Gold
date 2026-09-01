@@ -179,6 +179,42 @@ def notional_report(res) -> Dict:
     }
 
 
+def sizing_report(res) -> Dict:
+    """Every sizing verdict, accepted or rejected, summarised.
+
+    The rejection counts are the point: a run that quietly takes no trades and
+    a run that takes them all look identical in a P&L table, and the difference
+    between them is entirely in here.
+    """
+    z = res.sizing
+    cfg = res.config
+    out = {
+        "override_enabled": bool(cfg.enable_min_lot_override),
+        "target_risk_pct_per_sleeve": cfg.effective_target_risk_pct(),
+        "override_max_risk_pct_per_sleeve": cfg.override_max_risk_pct_per_sleeve,
+        "max_total_open_risk_pct": cfg.max_total_open_risk_pct,
+        "minimum_lot": cfg.minimum_lot, "lot_step": cfg.lot_step,
+        "signals_evaluated": int(len(z)),
+    }
+    if not len(z):
+        return out
+    out["by_reason"] = {k: int(v) for k, v in z["reason"].value_counts().items()}
+    acc = z[z["final_lots"] > 0]
+    out["accepted"] = int(len(acc))
+    out["accepted_normal"] = int((z["reason"] == "ORDER_ACCEPTED_NORMAL_SIZE").sum())
+    out["accepted_override"] = int((z["reason"] == "ORDER_ACCEPTED_MINIMUM_OVERRIDE").sum())
+    out["rejected"] = int(len(z) - len(acc))
+    if len(acc):
+        out["accepted_max_stop_risk_pct"] = float(acc["actual_stop_risk_pct"].max())
+        out["accepted_median_stop_risk_pct"] = float(acc["actual_stop_risk_pct"].median())
+        out["accepted_max_total_open_risk_pct"] = float(acc["total_open_risk_pct_after"].max())
+    ov = z[z["override_used"]]
+    if len(ov):
+        out["override_stop_risk_pct_median"] = float(ov["actual_stop_risk_pct"].median())
+        out["override_stop_risk_pct_max"] = float(ov["actual_stop_risk_pct"].max())
+    return out
+
+
 def stop_report(res) -> Dict:
     d = res.diagnostics
     return {
@@ -223,6 +259,7 @@ def write_outputs(res, camps: pd.DataFrame, stats: Dict, cfg: RunConfig) -> Dict
     _w("fills.csv", res.fills)
     _w("financing.csv", res.financing)
     _w("sleeve_financing.csv", res.sleeve_financing)
+    _w("sizing_log.csv", res.sizing)
     _w("bars_debug.csv", res.bars)
     _w("sleeve_direction.csv", sleeve_direction_table(res, cfg.contract_oz))
     _w("cost_waterfall.csv", cost_waterfall(res))
@@ -237,6 +274,7 @@ def write_outputs(res, camps: pd.DataFrame, stats: Dict, cfg: RunConfig) -> Dict
         "statistics": stats,
         "sample_windows": sample_windows(res, cfg),
         "notional": notional_report(res),
+        "sizing": sizing_report(res),
         "stops": stop_report(res),
         "financing_model": res.diagnostics.get("financing_coverage"),
         "financing_reconciliation": financing_reconciliation(res),

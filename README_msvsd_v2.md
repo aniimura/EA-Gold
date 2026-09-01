@@ -316,3 +316,97 @@ lot step, or a 10 oz micro gold contract. Either reproduces the $100,000
 baseline exactly. If you use a micro contract, scale `swap_long_flat`,
 `swap_short_flat` and `commission_per_lot_rt` by `contract_oz / 100` — those
 are quoted per standard lot.
+
+---
+
+## Minimum-lot override (small accounts)
+
+**Off by default.** With it off, nothing about the strategy changes.
+
+At 0.10 % per sleeve a $10,000 account wants 0.003–0.008 lots for every entry
+in the record and never reaches the 0.01 broker minimum, so it takes zero
+trades. The override lets it place **exactly one minimum-size position** when
+the normal size rounds below the minimum — subject to a risk gate.
+
+The two caps are **permission limits, not sizing targets.** The target stays
+0.10 %. A minimum lot on a small account carries more risk than the target
+asks for; gating it is the whole point.
+
+### Profiles
+
+```bash
+python bt_xau_msvsd.py --profile baseline_strict                # the frozen default
+python bt_xau_msvsd.py --profile small_account_override         # $10k, gated override
+python bt_xau_msvsd.py --profile small_account_override_stress  # DIAGNOSTIC ONLY
+```
+
+| Profile | Capital | Target | Sleeve cap | Total cap | Override |
+|---|---:|---:|---:|---:|---|
+| `baseline_strict` | $100,000 | 0.10 % | — | — | off |
+| `small_account_override` | $10,000 | 0.10 % | 0.50 % | 1.00 % | on |
+| `small_account_override_stress` | $10,000 | 0.10 % | 1.00 % | 2.00 % | on |
+
+The stress profile is **diagnostic only** — it exists to show how the gate
+responds when loosened, and every run stamps `DIAGNOSTIC_ONLY__NOT_RECOMMENDED`.
+
+### Individual flags
+
+```bash
+python bt_xau_msvsd.py --capital 10000 --enable-min-lot-override \
+    --override-max-risk-pct 0.50 --max-total-open-risk-pct 1.00 \
+    --minimum-lot 0.01 --lot-step 0.01
+```
+
+Flags always beat the profile they are combined with.
+
+### The algorithm
+
+1. Size normally at 0.10 %, round **down** to the lot step.
+2. At or above the broker minimum → place it, `override_used = false`. The caps
+   are **not** consulted; this is why the disabled path is bit-identical.
+3. Below the minimum and override off → skip, exactly as before.
+4. Below the minimum and override on → test **one** minimum-lot position:
+   - `price_stop_loss = stop_distance × value_per_price_per_lot × lots`
+   - plus modelled entry cost (spread + slippage + commission) and stop-exit
+     cost (spread + stop slippage + commission)
+   - allow only if `actual_stop_risk ≤ 0.50 %` of equity **and**
+     `total_open_risk_after ≤ 1.00 %` of equity
+   - otherwise skip and record which cap rejected it.
+5. The position is never enlarged beyond the minimum.
+
+Swap is deliberately **not** in the entry gate — holding duration is unknown at
+entry — but is applied normally everywhere else in the backtest.
+
+Total open risk is **gross across the virtual sleeves**: a long and a short of
+equal size leave the broker flat while both can still lose at their own stop,
+and netting them would hide that. A stop that locks in a profit contributes
+**zero**, never a negative, so a winner can never finance a new position.
+
+### Logging
+
+Every signal — accepted or rejected — is written to
+`results/v2/<tag>_sizing_log.csv` with 26 columns: equity, ATR, entry and stop
+price, stop distance, raw/rounded/final lots, minimum lot, whether the override
+was considered and used, price stop loss, cost estimates, actual stop risk in
+USD and percent, total open risk before and after, and the reason. Stable
+labels: `ORDER_ACCEPTED_NORMAL_SIZE`, `ORDER_ACCEPTED_MINIMUM_OVERRIDE`,
+`OVERRIDE_DISABLED`, `OVERRIDE_SLEEVE_RISK_EXCEEDED`,
+`PORTFOLIO_OPEN_RISK_EXCEEDED`, with `NORMAL_SIZE_BELOW_MINIMUM` /
+`NORMAL_SIZE_OK` in the `condition` column.
+
+### MQL5 and Pine
+
+The EA reads `SYMBOL_VOLUME_MIN`, `SYMBOL_VOLUME_STEP` and the tick metadata,
+and cross-checks its risk arithmetic against `OrderCalcProfit` for both
+directions at init. Explicit overrides (`InpMinLotOverrideVal`,
+`InpLotStepOverrideVal`, `InpTickSizeOverrideVal`, `InpTickValueOverrideVal`,
+`InpContractOverrideVal`) exist so Python and MQL5 can be reconciled under
+identical contract assumptions:
+
+```bash
+python run_mt5_msvsd.py --sizing-selftest   # writes results/v2/mql5_sizing_selftest.csv
+python -m unittest tests.test_min_lot_override.TestMql5Parity
+```
+
+Pine has the same inputs and the same gate, with `minimumLot` stated by hand
+because Pine cannot read the broker's minimum.

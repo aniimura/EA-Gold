@@ -72,6 +72,25 @@ input string InpAtrSeedFrom    = "2021.12.31 16:00";  // seed ta.atr here (serve
 input long   InpMagic          = 20260902;
 input int    InpSlippagePoints = 30;      // max deviation allowed on a market order
 
+//--- minimum-lot override (OFF by default) ----------------------------------
+// Lets a small account trade the broker minimum when the normal 0.10 % size
+// rounds below it. The two caps are PERMISSION limits, not sizing targets -
+// the target stays InpRiskPct. Mirrors msvsd/sizing.py exactly.
+input bool   InpEnableMinLotOverride = false;
+input double InpOverrideMaxRiskPct   = 0.50;  // per-sleeve cap, % of equity
+input double InpMaxTotalOpenRiskPct  = 1.00;  // gross open-risk cap, % of equity
+input double InpStopExitSlipPoints   = 5.0;   // assumed slippage on a stop exit
+input double InpCommissionPerLotRT   = 7.85;  // USD per lot round turn, for the gate
+// Normally these come from SYMBOL_VOLUME_MIN / SYMBOL_VOLUME_STEP / tick data.
+// The explicit overrides exist so Python and MQL5 can be reconciled under
+// identical contract assumptions; 0 means "ask the symbol".
+input double InpMinLotOverrideVal    = 0.0;
+input double InpLotStepOverrideVal   = 0.0;
+input double InpTickSizeOverrideVal  = 0.0;
+input double InpTickValueOverrideVal = 0.0;
+input double InpContractOverrideVal  = 0.0;
+input bool   InpSizingSelfTest       = false; // run the parity table, then stop
+
 //--- output -----------------------------------------------------------------
 input bool   InpWriteTrades    = true;
 input bool   InpWriteBars      = false;   // per-bar debug export for --reconcile
@@ -118,6 +137,42 @@ double  g_volMax     = 100.0;
 double  g_point      = 0.01;
 int     g_digits     = 2;
 bool    g_hedging    = false;
+
+double  g_minLot     = 0.01;                // effective broker minimum
+double  g_tickSize   = 0.01;
+double  g_tickValue  = 1.0;
+int     g_fhSizing   = INVALID_HANDLE;
+int     g_sizeRows   = 0;
+
+// Mutable mirrors of the gate inputs. The live path copies the inputs into
+// these once at init and never touches them again; the self test varies them
+// per case, which an `input` cannot do.
+bool    g_ovEnable   = false;
+double  g_ovSleeveCap= 0.50;
+double  g_ovTotalCap = 1.00;
+double  g_slipPts    = 5.0;
+double  g_stopSlipPts= 5.0;
+double  g_commLotRT  = 7.85;
+
+// stable labels - a wire format shared with msvsd/sizing.py and the Pine
+#define RSN_ACCEPT_NORMAL   "ORDER_ACCEPTED_NORMAL_SIZE"
+#define RSN_ACCEPT_OVERRIDE "ORDER_ACCEPTED_MINIMUM_OVERRIDE"
+#define RSN_OVERRIDE_OFF    "OVERRIDE_DISABLED"
+#define RSN_SLEEVE_RISK     "OVERRIDE_SLEEVE_RISK_EXCEEDED"
+#define RSN_PORTFOLIO_RISK  "PORTFOLIO_OPEN_RISK_EXCEEDED"
+#define CND_BELOW_MIN       "NORMAL_SIZE_BELOW_MINIMUM"
+#define CND_NORMAL          "NORMAL_SIZE_OK"
+
+struct SizeDecision
+  {
+   double raw_lots, rounded_lots, final_lots;
+   double stop_distance, entry_price, stop_price;
+   double price_stop_loss, est_entry_cost, est_exit_cost, est_costs;
+   double actual_stop_risk, actual_stop_risk_pct;
+   double open_before, open_after, open_pct_before, open_pct_after;
+   bool   override_considered, override_used;
+   string condition, reason;
+  };
 
 double  g_netTarget  = 0.0;                 // last computed target, in lots
 double  g_netRaw     = 0.0;
@@ -368,6 +423,155 @@ void SetNetPosition(double target)
   }
 
 //============================================================================
+// sizing and the minimum-lot override   (mirror of msvsd/sizing.py)
+//============================================================================
+// USD per 1.0 of price movement, per lot. Prefers the tick metadata, which is
+// the platform-native form and generalises off XAUUSD; falls back to contract
+// size. For a 100 oz gold contract the two agree exactly: 1.0 / 0.01 == 100.
+double MoneyPerPricePerLot()
+  {
+   if(g_tickSize > 0.0 && g_tickValue > 0.0) return g_tickValue/g_tickSize;
+   return g_contract;
+  }
+
+double CommPerOzSide()
+  {
+   return (g_commLotRT/2.0)/g_contract;
+  }
+
+// Bars are BID: a long pays the spread entering, a short pays it on exit, so a
+// round trip costs the same either way and the gate cannot favour a side.
+double EntryCostOf(double lots,int dir,double spread_price)
+  {
+   double oz = lots*g_contract;
+   double spr = (dir > 0) ? spread_price : 0.0;
+   return (spr + g_slipPts*g_point)*oz + CommPerOzSide()*oz;
+  }
+
+double ExitCostOf(double lots,int dir,double spread_price)
+  {
+   double oz = lots*g_contract;
+   double spr = (dir < 0) ? spread_price : 0.0;
+   return (spr + g_stopSlipPts*g_point)*oz + CommPerOzSide()*oz;
+  }
+
+// Capital still at risk in one open sleeve, from here to its stop. GROSS: a
+// long and a short of equal size leave the BROKER flat, yet both can still lose
+// at their own stop, and netting them would hide that. A stop that locks in a
+// profit contributes ZERO, never a negative - a winner may not finance a new
+// position.
+double SleeveOpenRiskAt(int idx,double price,double spread_price)
+  {
+   if(g_dir[idx] == 0 || g_lots[idx] <= 0.0 || g_stopPx[idx] == EMPTY_VALUE)
+      return 0.0;
+   double adverse = (g_dir[idx] > 0) ? (price - g_stopPx[idx])
+                                     : (g_stopPx[idx] - price);
+   if(adverse <= 0.0) return 0.0;
+   return adverse*MoneyPerPricePerLot()*g_lots[idx]
+          + ExitCostOf(g_lots[idx], g_dir[idx], spread_price);
+  }
+
+double TotalOpenRiskAt(int exclude_idx,double price,double spread_price)
+  {
+   double t = 0.0;
+   for(int k=0;k<NS;k++)
+      if(k != exclude_idx) t += SleeveOpenRiskAt(k, price, spread_price);
+   return t;
+  }
+
+SizeDecision DecideSize(int idx,int dir,double atr_now,double riskCash,
+                        double equity,double price,double spread_price)
+  {
+   SizeDecision d;
+   double mpp = MoneyPerPricePerLot();
+   d.stop_distance = atr_now*InpAtrMult;
+   d.entry_price   = price;
+   d.stop_price    = price - d.stop_distance*dir;
+   d.override_considered = false;
+   d.override_used = false;
+   d.final_lots = 0.0;
+   d.price_stop_loss = 0.0; d.est_entry_cost = 0.0; d.est_exit_cost = 0.0;
+   d.est_costs = 0.0; d.actual_stop_risk = 0.0; d.actual_stop_risk_pct = 0.0;
+   d.condition = CND_NORMAL; d.reason = "";
+
+   double riskPerLot = d.stop_distance*mpp;
+   d.raw_lots     = (riskPerLot > 0.0) ? riskCash/riskPerLot : 0.0;
+   d.rounded_lots = FloorStep(d.raw_lots, g_volStep);
+
+   d.open_before     = TotalOpenRiskAt(idx, price, spread_price);
+   d.open_pct_before = (equity > 0.0) ? 100.0*d.open_before/equity : 0.0;
+   d.open_after      = d.open_before;
+   d.open_pct_after  = d.open_pct_before;
+
+   double test = 0.0;
+   if(d.rounded_lots >= g_minLot - 1e-12 && d.rounded_lots > 0.0)
+     {
+      d.reason = RSN_ACCEPT_NORMAL;
+      d.final_lots = d.rounded_lots;
+      test = d.final_lots;
+     }
+   else
+     {
+      d.condition = CND_BELOW_MIN;
+      if(!g_ovEnable)
+        {
+         d.reason = RSN_OVERRIDE_OFF;
+         return d;
+        }
+      d.override_considered = true;
+      test = g_minLot;            // exactly one minimum-size position, never more
+     }
+
+   d.price_stop_loss = d.stop_distance*mpp*test;
+   d.est_entry_cost  = EntryCostOf(test, dir, spread_price);
+   d.est_exit_cost   = ExitCostOf(test, dir, spread_price);
+   d.est_costs       = d.est_entry_cost + d.est_exit_cost;
+   d.actual_stop_risk     = d.price_stop_loss + d.est_costs;
+   d.actual_stop_risk_pct = (equity > 0.0) ? 100.0*d.actual_stop_risk/equity : 0.0;
+   d.open_after     = d.open_before + d.actual_stop_risk;
+   d.open_pct_after = (equity > 0.0) ? 100.0*d.open_after/equity : 0.0;
+
+   if(d.reason == RSN_ACCEPT_NORMAL) return d;   // normal path ignores the caps
+
+   double EPS = 1e-9;
+   if(d.actual_stop_risk_pct > g_ovSleeveCap + EPS)
+     { d.reason = RSN_SLEEVE_RISK; return d; }
+   if(d.open_pct_after > g_ovTotalCap + EPS)
+     { d.reason = RSN_PORTFOLIO_RISK; return d; }
+
+   d.final_lots = test;
+   d.override_used = true;
+   d.reason = RSN_ACCEPT_OVERRIDE;
+   return d;
+  }
+
+void WriteSizingRow(datetime when,int idx,int dir,const SizeDecision &d)
+  {
+   if(g_fhSizing == INVALID_HANDLE) return;
+   g_sizeRows++;
+   FileWrite(g_fhSizing,
+      TimeToString(when, TIME_DATE|TIME_SECONDS),
+      g_name[idx], (dir==1 ? "long" : "short"),
+      DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY),2),
+      DoubleToString(g_atr,8),
+      DoubleToString(d.entry_price,g_digits), DoubleToString(d.stop_price,g_digits),
+      DoubleToString(d.stop_distance,g_digits),
+      DoubleToString(d.raw_lots,6), DoubleToString(d.rounded_lots,6),
+      DoubleToString(d.final_lots,6), DoubleToString(g_minLot,6),
+      DoubleToString(g_volStep,6),
+      (d.override_considered ? "true" : "false"),
+      (d.override_used ? "true" : "false"),
+      DoubleToString(d.price_stop_loss,6),
+      DoubleToString(d.est_entry_cost,6), DoubleToString(d.est_exit_cost,6),
+      DoubleToString(d.est_costs,6),
+      DoubleToString(d.actual_stop_risk,6),
+      DoubleToString(d.actual_stop_risk_pct,6),
+      DoubleToString(d.open_before,6), DoubleToString(d.open_after,6),
+      DoubleToString(d.open_pct_before,6), DoubleToString(d.open_pct_after,6),
+      d.condition, d.reason);
+  }
+
+//============================================================================
 // sleeve bookkeeping
 //============================================================================
 void SleeveReset(int s)
@@ -423,6 +627,77 @@ void WriteTrade(int s,int dir,double lots,double entryPx,double stopPx,
       DoubleToString(stopDist>0 ? pts/stopDist : 0.0, 5));
   }
 
+
+//============================================================================
+// Python / MQL5 sizing parity self test
+//   Duplicated verbatim from tests/parity_cases.py. Both sides decide every
+//   row; tests/test_min_lot_override.py compares them and asserts the row
+//   COUNT matches, so a case added on one side and not the other fails loudly
+//   instead of silently comparing fewer rows.
+//============================================================================
+void SelfTestCase(string id, double equity, double stop_dist, int dir,
+                  bool enable, double contract_oz, double min_lot,
+                  double lot_step, double spread, double entry_slip,
+                  double stop_slip, double comm_lot_rt,
+                  int n_open, const int &odir[], const double &olots[],
+                  const double &ostop[])
+  {
+   // stage the instrument and cost assumptions for this row
+   g_contract = contract_oz; g_minLot = min_lot; g_volStep = lot_step;
+   g_tickSize = 0.0; g_tickValue = 0.0;          // force the contract-size path
+   g_ovEnable = enable; g_ovSleeveCap = 0.50; g_ovTotalCap = 1.00;
+   g_slipPts = entry_slip/g_point; g_stopSlipPts = stop_slip/g_point;
+   g_commLotRT = comm_lot_rt;
+
+   for(int k=0;k<NS;k++) { g_dir[k]=0; g_lots[k]=0.0; g_stopPx[k]=EMPTY_VALUE; }
+   for(int j=0;j<n_open && j<NS-1;j++)
+     { g_dir[j+1]=odir[j]; g_lots[j+1]=olots[j]; g_stopPx[j+1]=ostop[j]; }
+
+   double price = 2000.0;
+   double riskCash = equity*0.10/100.0;
+   SizeDecision d = DecideSize(0, dir, stop_dist/InpAtrMult, riskCash,
+                               equity, price, spread);
+   FileWrite(g_fhSizing, id, DoubleToString(d.final_lots,6),
+             DoubleToString(d.actual_stop_risk,6),
+             DoubleToString(d.actual_stop_risk_pct,6),
+             DoubleToString(d.open_before,6), DoubleToString(d.open_after,6),
+             (d.override_used ? "true" : "false"), d.condition, d.reason);
+  }
+
+void SizingSelfTest()
+  {
+   if(g_fhSizing == INVALID_HANDLE) { Print("self test: no output file"); return; }
+   FileWrite(g_fhSizing,"id","final_lots","actual_stop_risk","actual_stop_risk_pct",
+             "open_before","open_after","override_used","condition","reason");
+   int    od[3]; double ol[3], os[3];
+   ArrayInitialize(od,0); ArrayInitialize(ol,0.0); ArrayInitialize(os,0.0);
+
+   SelfTestCase("normal_size_large_account",100000,32.5, 1,true ,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("normal_size_override_off", 100000,32.5, 1,false,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("below_min_override_off",    10000,20.0, 1,false,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("override_accept_20usd",     10000,20.0, 1,true ,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("override_accept_on_cap_50usd",10000,50.0,1,true,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("override_reject_sleeve_51usd",10000,51.0,1,true,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("override_short_symmetric",  10000,20.0,-1,true ,100,0.01,0.01,0,0,0,0,0,od,ol,os);
+
+   od[0]= 1; ol[0]=0.01; os[0]=1930.0;
+   SelfTestCase("override_reject_portfolio", 10000,40.0, 1,true ,100,0.01,0.01,0,0,0,0,1,od,ol,os);
+   od[0]= 1; ol[0]=0.01; os[0]=1940.0;
+   SelfTestCase("override_accept_on_portfolio_cap",10000,40.0,1,true,100,0.01,0.01,0,0,0,0,1,od,ol,os);
+   od[0]= 1; ol[0]=0.01; os[0]=1955.0; od[1]=-1; ol[1]=0.01; os[1]=2045.0;
+   SelfTestCase("opposing_sleeves_gross",    10000,20.0, 1,true ,100,0.01,0.01,0,0,0,0,2,od,ol,os);
+   od[0]= 1; ol[0]=0.01; os[0]=2050.0; od[1]=0; ol[1]=0.0; os[1]=0.0;
+   SelfTestCase("winning_stop_contributes_zero",10000,20.0,1,true,100,0.01,0.01,0,0,0,0,1,od,ol,os);
+   od[0]=0; ol[0]=0.0; os[0]=0.0;
+
+   SelfTestCase("with_costs",                10000,49.0, 1,true ,100,0.01,0.01,0.5,0.5,0.5,50.0,0,od,ol,os);
+   SelfTestCase("micro_contract",            10000,20.0, 1,true , 10,0.01,0.01,0,0,0,0,0,od,ol,os);
+   SelfTestCase("coarse_minimum_lot",        10000,20.0, 1,true ,100,0.10,0.10,0,0,0,0,0,od,ol,os);
+
+   FileClose(g_fhSizing); g_fhSizing = INVALID_HANDLE;
+   Print("sizing self test written: 14 cases");
+  }
+
 //============================================================================
 // OnInit / OnDeinit
 //============================================================================
@@ -444,6 +719,45 @@ int OnInit()
 
    if(g_contract<=0) g_contract = 100.0;
    if(g_volStep<=0)  g_volStep  = 0.01;
+   g_tickSize  = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+   g_tickValue = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+   g_minLot    = g_volMin;
+   // explicit test overrides, so Python and MQL5 can be reconciled under
+   // identical contract assumptions
+   if(InpContractOverrideVal  > 0.0) g_contract  = InpContractOverrideVal;
+   if(InpMinLotOverrideVal    > 0.0) g_minLot    = InpMinLotOverrideVal;
+   if(InpLotStepOverrideVal   > 0.0) g_volStep   = InpLotStepOverrideVal;
+   if(InpTickSizeOverrideVal  > 0.0) g_tickSize  = InpTickSizeOverrideVal;
+   if(InpTickValueOverrideVal > 0.0) g_tickValue = InpTickValueOverrideVal;
+   if(g_minLot <= 0.0) g_minLot = g_volStep;
+   g_ovEnable    = InpEnableMinLotOverride;
+   g_ovSleeveCap = InpOverrideMaxRiskPct;
+   g_ovTotalCap  = InpMaxTotalOpenRiskPct;
+   g_slipPts     = InpSlippagePoints;
+   g_stopSlipPts = InpStopExitSlipPoints;
+   g_commLotRT   = InpCommissionPerLotRT;
+
+   // Cross-check the tick-value maths against the platform calculation for BOTH
+   // directions. If they disagree the risk gate is being fed a wrong number, and
+   // that is worth knowing at init rather than after a backtest.
+   double probe_lots = MathMax(g_minLot, g_volStep);
+   double px = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   if(px <= 0.0) px = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   if(px > 0.0)
+     {
+      double dist = 10.0*g_point*100.0;   // an arbitrary but non-trivial distance
+      double want = dist*MoneyPerPricePerLot()*probe_lots;
+      double got_long=0.0, got_short=0.0;
+      if(OrderCalcProfit(ORDER_TYPE_BUY, _Symbol, probe_lots, px, px-dist, got_long) &&
+         OrderCalcProfit(ORDER_TYPE_SELL, _Symbol, probe_lots, px, px+dist, got_short))
+        {
+         double el = MathAbs(MathAbs(got_long)-want), es = MathAbs(MathAbs(got_short)-want);
+         double tol = MathMax(0.01, want*1e-6);
+         PrintFormat("sizing cross-check: want=%.4f long=%.4f short=%.4f %s",
+                     want, got_long, got_short,
+                     (el<=tol && es<=tol) ? "AGREE" : "DISAGREE - CHECK TICK METADATA");
+        }
+     }
 
    g_trade.SetExpertMagicNumber(InpMagic);
    g_trade.SetDeviationInPoints(InpSlippagePoints);
@@ -459,6 +773,29 @@ int OnInit()
                    "entry_price","sl","tp","entry_atr","entry_spread_points",
                    "exit_bar","exit_time","exit_price","exit_reason","bars_held",
                    "lots","points","gross","r_multiple");
+     }
+   if(InpEnableMinLotOverride || InpWriteBars || InpSizingSelfTest)
+     {
+      g_fhSizing = FileOpen("fxtrade_XauMsvsd_sizing.csv",
+                            FILE_WRITE|FILE_CSV|FILE_ANSI|FILE_COMMON, ',');
+      if(g_fhSizing!=INVALID_HANDLE && !InpSizingSelfTest)
+         FileWrite(g_fhSizing,"time","sleeve","direction","equity","atr",
+                   "entry_price","stop_price","stop_distance","raw_lots",
+                   "rounded_lots","final_lots","minimum_lot","lot_step",
+                   "override_considered","override_used","price_stop_loss",
+                   "estimated_entry_cost","estimated_exit_cost","estimated_costs",
+                   "actual_stop_risk","actual_stop_risk_pct",
+                   "total_open_risk_before","total_open_risk_after",
+                   "total_open_risk_pct_before","total_open_risk_pct_after",
+                   "condition","reason");
+     }
+   if(InpSizingSelfTest)
+     {
+      // The table below deliberately rewrites contract size, minimum lot and
+      // sleeve state per row. Refuse to continue into a backtest on it.
+      SizingSelfTest();
+      Print("sizing self test complete - halting before the backtest");
+      return(INIT_FAILED);
      }
    if(InpWriteBars)
      {
@@ -498,6 +835,7 @@ void OnDeinit(const int reason)
                        g_entryTime[s],g_entryBar[s],r[1].close,r[1].time,
                        g_barIndex,R_EXIT_END);
 
+   if(g_fhSizing!=INVALID_HANDLE) { FileClose(g_fhSizing); g_fhSizing=INVALID_HANDLE; }
    if(g_fhTrades!=INVALID_HANDLE) { FileClose(g_fhTrades); g_fhTrades=INVALID_HANDLE; }
    if(g_fhBars  !=INVALID_HANDLE) { FileClose(g_fhBars);   g_fhBars  =INVALID_HANDLE; }
   }
@@ -596,13 +934,15 @@ void RunBar()
 
       double raw=0.0, lots=0.0;
       bool unsized=false;
+      SizeDecision dec;
       if(newDir!=0)
         {
-         double stopDist  = g_atr*InpAtrMult;
-         double riskPerLot= stopDist*g_contract;
-         raw  = (riskPerLot>0.0) ? riskCash/riskPerLot : 0.0;
-         lots = FloorStep(raw, g_volStep);
-         if(lots < g_volMin - 1e-9) { newDir=0; unsized=true; }
+         double spreadPrice = SymbolInfoInteger(_Symbol,SYMBOL_SPREAD)*g_point;
+         dec = DecideSize(s, newDir, g_atr, riskCash, equity, evClose, spreadPrice);
+         WriteSizingRow(evTime, s, newDir, dec);
+         raw  = dec.raw_lots;
+         lots = dec.final_lots;
+         if(lots <= 0.0) { newDir=0; unsized=true; }
         }
 
       // close the outgoing position BEFORE the new state overwrites it

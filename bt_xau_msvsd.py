@@ -37,7 +37,8 @@ from msvsd.config import (BASELINE_ATR_MULT, BASELINE_CAPITAL, BASELINE_LOT_STEP
                           SLEEVE_MODES, SLEEVE_MODE_MEMBERS, STOP_MODES,
                           SWAP_MISSING_POLICIES, SWAP_MODELS, SWAP_SCENARIOS,
                           BASELINE_SWAP_LONG, BASELINE_SWAP_SHORT,
-                          BASELINE_COMMISSION_PER_LOT_RT)
+                          BASELINE_COMMISSION_PER_LOT_RT, BASELINE_MINIMUM_LOT,
+                          PROFILES, apply_profile)
 from msvsd.dataio import DataError                           # noqa: E402
 from msvsd.financing import FinancingError                    # noqa: E402
 from msvsd.reporting import print_summary, write_outputs      # noqa: E402
@@ -85,6 +86,21 @@ def build_parser() -> argparse.ArgumentParser:
                         "commission are quoted PER STANDARD LOT and are scaled "
                         "pro rata automatically.")
     a.add_argument("--max-notional", type=float, default=BASELINE_MAX_NOTIONAL_X)
+    a.add_argument("--minimum-lot", type=float, default=None,
+                   help="broker SYMBOL_VOLUME_MIN (default %g)" % BASELINE_MINIMUM_LOT)
+
+    o = p.add_argument_group("minimum-lot override (off by default)")
+    o.add_argument("--profile", choices=sorted(PROFILES), default=None,
+                   help="named configuration; explicit flags still win")
+    o.add_argument("--enable-min-lot-override", action="store_true",
+                   help="allow ONE minimum-lot position when the normal size "
+                        "rounds below the broker minimum, subject to the caps below")
+    o.add_argument("--override-max-risk-pct", type=float, default=None,
+                   metavar="PCT",
+                   help="per-sleeve permission cap for override trades, NOT a "
+                        "sizing target (default 0.50)")
+    o.add_argument("--max-total-open-risk-pct", type=float, default=None,
+                   metavar="PCT", help="gross open-risk cap across sleeves (default 1.00)")
 
     s = p.add_argument_group("strategy / challenger modes")
     s.add_argument("--sleeves", type=_sleeve_mode, default="all",
@@ -166,13 +182,42 @@ def config_from_args(args) -> RunConfig:
         kw["swap_long_flat"] = BASELINE_SWAP_LONG * sc
         kw["swap_short_flat"] = BASELINE_SWAP_SHORT * sc
         kw["commission_per_lot_rt"] = BASELINE_COMMISSION_PER_LOT_RT * sc
+    if args.minimum_lot is not None:
+        kw["minimum_lot"] = args.minimum_lot
+    if args.enable_min_lot_override:
+        kw["enable_min_lot_override"] = True
+    if args.override_max_risk_pct is not None:
+        kw["override_max_risk_pct_per_sleeve"] = args.override_max_risk_pct
+    if args.max_total_open_risk_pct is not None:
+        kw["max_total_open_risk_pct"] = args.max_total_open_risk_pct
     if args.no_swap:
         kw["swap_model"] = "none"
     if args.date_from:
         kw["date_from"] = args.date_from
     if args.date_to:
         kw["date_to"] = args.date_to
-    return RunConfig(**kw)
+    cfg = RunConfig(**kw)
+    if args.profile:
+        # profile first, then re-apply the flags the user typed explicitly so a
+        # flag always beats the profile it was combined with
+        cfg = apply_profile(cfg, args.profile)
+        explicit = {}
+        if args.capital != BASELINE_CAPITAL:
+            explicit["capital"] = args.capital
+        if args.risk != BASELINE_RISK_PCT:
+            explicit["risk_pct"] = args.risk
+            explicit["target_risk_pct_per_sleeve"] = args.risk
+        if args.minimum_lot is not None:
+            explicit["minimum_lot"] = args.minimum_lot
+        if args.lot_step != BASELINE_LOT_STEP:
+            explicit["lot_step"] = args.lot_step
+        if args.override_max_risk_pct is not None:
+            explicit["override_max_risk_pct_per_sleeve"] = args.override_max_risk_pct
+        if args.max_total_open_risk_pct is not None:
+            explicit["max_total_open_risk_pct"] = args.max_total_open_risk_pct
+        if explicit:
+            cfg = cfg.replace(**explicit)
+    return cfg
 
 
 def main(argv=None) -> int:
