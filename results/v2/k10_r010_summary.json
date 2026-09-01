@@ -1,0 +1,277 @@
+{
+  "tag": "k10_r010",
+  "labels": [
+    "APPROXIMATE_INTRABAR_STOPS",
+    "FLAT_CARRY_ASSUMPTION",
+    "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+    "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+  ],
+  "config": {
+    "h4_file": null,
+    "ltf_file": null,
+    "swap_file": null,
+    "events_file": null,
+    "date_from": "2022-01-01",
+    "date_to": "2026-08-31",
+    "symbol": "GOLD",
+    "timeframe": "H4",
+    "capital": 10000.0,
+    "risk_pct": 0.1,
+    "contract_oz": 100.0,
+    "lot_step": 0.01,
+    "max_notional_x": 1.5,
+    "sleeve_mode": "all",
+    "direction_mode": "symmetric",
+    "atr_len": 20,
+    "atr_mult": 2.5,
+    "exit_scale": 1.0,
+    "allow_reversal": true,
+    "friday_filter": true,
+    "friday_hour": 13,
+    "friday_basis": "open",
+    "lookahead_audit": false,
+    "same_bar_fill_audit": false,
+    "point": 0.01,
+    "commission_per_lot_rt": 7.85,
+    "slippage_points": 5.0,
+    "cost_scale": 1.0,
+    "use_costs": true,
+    "swap_model": "flat",
+    "swap_scenario": "base",
+    "swap_missing_policy": "error",
+    "swap_long_flat": -52.4,
+    "swap_short_flat": 23.58,
+    "triple_weekday": 2,
+    "stop_mode": "h4",
+    "ltf_stop_slippage_points": 5.0,
+    "close_final_position_with_costs": false,
+    "financing_timing": "post-fill",
+    "log_open_sleeves_at_end": false,
+    "v1_compat": false,
+    "event_mode": "report-only",
+    "seed": 20260901,
+    "bootstrap_n": 20000,
+    "n_configs_tested": 1,
+    "tag": "k10_r010",
+    "outdir": "results\\v2",
+    "label_flags": [],
+    "labels": [
+      "APPROXIMATE_INTRABAR_STOPS",
+      "FLAT_CARRY_ASSUMPTION",
+      "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+      "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+    ],
+    "sleeve_defs": [
+      [
+        "fast",
+        20,
+        10
+      ],
+      [
+        "medium",
+        55,
+        20
+      ],
+      [
+        "slow",
+        120,
+        40
+      ]
+    ]
+  },
+  "code_version": "05ff7c5fe99e",
+  "config_fingerprint": "3a96f451b23f",
+  "statistics": {
+    "seed": 20260901,
+    "resamples": 20000,
+    "risk": {
+      "years": 4.6571,
+      "initial_capital": 10000.0,
+      "final_equity": 10000.0,
+      "net_profit": 0.0,
+      "return_pct": 0.0,
+      "cagr_pct": 0.0,
+      "max_dd_pct": 0.0,
+      "max_dd_money": 0.0,
+      "ann_vol_pct": 0.0,
+      "sortino": NaN,
+      "calmar": NaN,
+      "exposure_pct": 0.0,
+      "turnover_notional": 0.0,
+      "turnover_x_equity_per_year": 0.0,
+      "skew_daily": NaN,
+      "kurtosis_daily": NaN
+    },
+    "bootstrap_block_monthly": {
+      "method": "monthly_block_bootstrap",
+      "units": "mean daily return",
+      "point_estimate": 0.0,
+      "bootstrap_mean": 0.0,
+      "standard_error": 0.0,
+      "ci90": [
+        0.0,
+        0.0
+      ],
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "ci99": [
+        0.0,
+        0.0
+      ],
+      "p_mean_le_zero": 1.0,
+      "effective_observations": 56,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples whole monthly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (56), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+    },
+    "bootstrap_block_quarterly": {
+      "method": "quarterly_block_bootstrap",
+      "units": "mean daily return",
+      "point_estimate": 0.0,
+      "bootstrap_mean": 0.0,
+      "standard_error": 0.0,
+      "ci90": [
+        0.0,
+        0.0
+      ],
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "ci99": [
+        0.0,
+        0.0
+      ],
+      "p_mean_le_zero": 1.0,
+      "effective_observations": 19,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples whole quarterly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (19), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+    },
+    "sharpe": {
+      "n_days": 1446,
+      "sharpe_naive": NaN,
+      "sharpe_lo_adjusted": NaN,
+      "autocorr_factor": NaN
+    },
+    "deflated_sharpe": {
+      "deflated_sharpe": null,
+      "reason": "insufficient_inputs: needs >= 2 trials, a positive spread of trial Sharpes and >= 30 observations. Run experiments.py, which supplies all three."
+    },
+    "interpretation_warning": "A confidence interval that excludes zero is not proof of a durable edge. This is one instrument, one broker cost model and one regime. Treat every figure here as a description of this sample, not a forecast."
+  },
+  "sample_windows": {
+    "in_sample_start": "2021-12-31 16:00:00",
+    "in_sample_end": "2026-08-28 20:00:00",
+    "in_sample_bars": 7206,
+    "out_of_sample_start": null,
+    "out_of_sample_end": null,
+    "out_of_sample_bars": 0,
+    "declaration": "NO OUT-OF-SAMPLE PERIOD EXISTS. The whole record above was visible while this framework was written, and it covers one instrument in one regime - the largest gold bull market on record. Nothing here has been validated on data the author had not already seen. Treat every statistic as a description of this sample."
+  },
+  "notional": {
+    "bars_evaluated": 7084,
+    "cap_binding_bars": 0,
+    "cap_binding_pct": 0.0,
+    "intended_exposure_lot_bars": 0.0,
+    "executed_exposure_lot_bars": 0.0,
+    "exposure_shortfall_pct": 0.0,
+    "net_target_rounding_loss_lot_bars": 0.0,
+    "sizing_intended_lots": 0.0,
+    "sizing_executed_lots": 0.0,
+    "sizing_rounding_loss_lots": 0.0,
+    "sizing_rounding_loss_pct": 0.0,
+    "max_abs_position_lots": 0.0
+  },
+  "stops": {
+    "mode": "h4",
+    "h4_approximated_stops": 0,
+    "ltf_stops_resolved_at_stop_price": 0,
+    "ltf_stops_gapped_through": 0,
+    "ltf_ambiguous_same_bar_events": 0,
+    "h4_bars_without_ltf_coverage": 0,
+    "ltf_coverage": null,
+    "ambiguity_rule": "all sleeves whose stop is touched inside one LTF bar are filled at their own stop price with adverse slippage, in the fixed order fast -> medium -> slow; the intrabar path is unknowable so the event is logged, never guessed",
+    "ambiguity_log": []
+  },
+  "financing_model": {
+    "model": "flat",
+    "scenario": null,
+    "missing_policy": null,
+    "rows_in_table": 0,
+    "table_first": null,
+    "table_last": null,
+    "rollovers_priced_historically": 0,
+    "rollovers_priced_by_fallback": 0,
+    "distinct_missing_dates": 0,
+    "missing_sample": []
+  },
+  "financing_reconciliation": {
+    "actual_account_swap": 0.0,
+    "sum_of_virtual_sleeve_swap": 0.0,
+    "netting_difference": 0.0,
+    "explanation": "The account finances ONE netted position. Each sleeve is priced as if it stood alone. When sleeves oppose each other, or when the notional cap or lot step trims the net target below the sum of sleeve sizes, the account carries less (or more) than the sleeves imply. The gap is shown rather than smoothed away."
+  },
+  "data_quality": {
+    "h4": {
+      "name": "GOLD H4 (repo cache)",
+      "rows": 7206,
+      "first": "2021-12-31 16:00:00",
+      "last": "2026-08-28 20:00:00",
+      "duplicates": 0,
+      "non_monotonic": 0,
+      "nan_ohlc": 0,
+      "invalid_bars": 0,
+      "nonpositive": 0,
+      "fatal": 0,
+      "notes": [],
+      "samples": {}
+    }
+  },
+  "diagnostics": {
+    "cap_binding_bars": 0,
+    "lot_rounding_loss_lots": 0.0,
+    "sizing_intended_lots": 0.0,
+    "sizing_executed_lots": 0.0,
+    "sizing_rounding_loss_lots": 0.0,
+    "entries_refused_unsizable": 0,
+    "intended_exposure_lots": 0.0,
+    "executed_exposure_lots": 0.0,
+    "stops_h4_approx": 0,
+    "stops_ltf_exact": 0,
+    "stops_ltf_gap": 0,
+    "ltf_ambiguous_events": 0,
+    "ltf_missing_h4_bars": 0,
+    "trades_near_events": 0,
+    "final_equity": 10000.0,
+    "net_profit": 0.0,
+    "cost_spread_slip": 0.0,
+    "cost_commission": 0.0,
+    "cost_swap": 0.0,
+    "turnover_oz": 0.0,
+    "turnover_notional": 0.0,
+    "n_fills": 0,
+    "financing_coverage": {
+      "model": "flat",
+      "scenario": null,
+      "missing_policy": null,
+      "rows_in_table": 0,
+      "table_first": null,
+      "table_last": null,
+      "rollovers_priced_historically": 0,
+      "rollovers_priced_by_fallback": 0,
+      "distinct_missing_dates": 0,
+      "missing_sample": []
+    },
+    "ltf_coverage": null,
+    "labels": [
+      "APPROXIMATE_INTRABAR_STOPS",
+      "FLAT_CARRY_ASSUMPTION",
+      "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+      "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+    ],
+    "ltf_timeframe": null,
+    "code_version": "05ff7c5fe99e",
+    "config_fingerprint": "3a96f451b23f"
+  }
+}

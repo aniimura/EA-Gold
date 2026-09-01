@@ -1,0 +1,304 @@
+{
+  "mt5_report": {
+    "bars": 7204,
+    "total_net_profit": 3422.59,
+    "gross_profit": 16894.9,
+    "max_dd": 1840.34,
+    "max_dd_pct": 1.82,
+    "max_eq_dd": 3106.6,
+    "max_eq_dd_pct": 3.04,
+    "gross_loss": -13472.31,
+    "profit_factor": 1.25,
+    "expected_payoff": 12.14,
+    "recovery_factor": 1.1,
+    "sharpe_ratio": 0.42,
+    "total_trades": 282,
+    "total_deals": 518,
+    "profit_trades": 110,
+    "win_rate": 39.01
+  },
+  "reconcile": {
+    "pine_export": "D:\\EA_Gold_TradingView\\FxTrade_202608\\results\\v2\\mt5_bars.csv",
+    "pine_rows": 7146,
+    "python_rows": 7206,
+    "overlapping_bars": 7146,
+    "fields_present": [
+      "stop_fast",
+      "stop_medium",
+      "stop_slow",
+      "ent_hi_fast",
+      "ent_lo_fast",
+      "exit_hi_fast",
+      "exit_lo_fast",
+      "ent_hi_medium",
+      "ent_lo_medium",
+      "exit_hi_medium",
+      "exit_lo_medium",
+      "ent_hi_slow",
+      "ent_lo_slow",
+      "exit_hi_slow",
+      "exit_lo_slow",
+      "qty_fast",
+      "qty_medium",
+      "qty_slow",
+      "net_target_lots",
+      "position_lots",
+      "state_fast",
+      "state_medium",
+      "state_slow",
+      "reason_fast",
+      "reason_medium",
+      "reason_slow",
+      "atr",
+      "equity_ex_financing"
+    ],
+    "fields_missing_from_export": [],
+    "tolerances": {
+      "price": 0.0001,
+      "qty": 1e-09,
+      "atr": 0.0001,
+      "equity": 0.01
+    },
+    "per_field": {
+      "stop_fast": {
+        "compared": 3992,
+        "mismatches": 0,
+        "max_abs_diff": 4.9562913773115724e-09,
+        "tolerance": 0.0001,
+        "nan_disagreements": 0
+      },
+      "stop_medium": {
+        "compared": 3444,
+        "mismatches": 0,
+        "max_abs_diff": 4.9562913773115724e-09,
+        "tolerance": 0.0001,
+        "nan_disagreements": 0
+      },
+      "stop_slow": {
+        "compared": 3029,
+        "mismatches": 0,
+        "max_abs_diff": 4.8466972657479346e-09,
+        "tolerance": 0.0001,
+        "nan_disagreements": 0
+      },
+      "ent_hi_fast": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "ent_lo_fast": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "exit_hi_fast": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "exit_lo_fast": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "ent_hi_medium": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "ent_lo_medium": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "exit_hi_medium": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "exit_lo_medium": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "ent_hi_slow": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "ent_lo_slow": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "exit_hi_slow": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "exit_lo_slow": {
+        "compared": 7083,
+        "mismatches": 63,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0001,
+        "nan_disagreements": 63
+      },
+      "qty_fast": {
+        "compared": 7146,
+        "mismatches": 32,
+        "max_abs_diff": 0.009999999999999998,
+        "tolerance": 1e-09,
+        "nan_disagreements": 0
+      },
+      "qty_medium": {
+        "compared": 7146,
+        "mismatches": 37,
+        "max_abs_diff": 0.009999999999999998,
+        "tolerance": 1e-09,
+        "nan_disagreements": 0
+      },
+      "qty_slow": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 1e-09,
+        "nan_disagreements": 0
+      },
+      "net_target_lots": {
+        "compared": 7083,
+        "mismatches": 100,
+        "max_abs_diff": 0.01999999999999999,
+        "tolerance": 1e-09,
+        "nan_disagreements": 63
+      },
+      "position_lots": {
+        "compared": 7146,
+        "mismatches": 39,
+        "max_abs_diff": 0.08,
+        "tolerance": 1e-09,
+        "nan_disagreements": 0
+      },
+      "state_fast": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0,
+        "nan_disagreements": 0
+      },
+      "state_medium": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0,
+        "nan_disagreements": 0
+      },
+      "state_slow": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0,
+        "nan_disagreements": 0
+      },
+      "reason_fast": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0,
+        "nan_disagreements": 0
+      },
+      "reason_medium": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0,
+        "nan_disagreements": 0
+      },
+      "reason_slow": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 0.0,
+        "tolerance": 0.0,
+        "nan_disagreements": 0
+      },
+      "atr": {
+        "compared": 7146,
+        "mismatches": 0,
+        "max_abs_diff": 4.999982650133461e-09,
+        "tolerance": 0.0001,
+        "nan_disagreements": 0
+      },
+      "equity_ex_financing": {
+        "compared": 7146,
+        "mismatches": 6986,
+        "max_abs_diff": 218.00975000005565,
+        "tolerance": 0.01,
+        "nan_disagreements": 0
+      }
+    },
+    "mismatch_count": 7950,
+    "first_mismatch": {
+      "time_utc": "2022-01-14 10:00:00",
+      "field": "ent_hi_fast",
+      "python": "nan",
+      "tradingview": "1829.05",
+      "abs_diff": "0.0",
+      "tolerance": "0.0001"
+    },
+    "max_price_diff": 4.9562913773115724e-09,
+    "max_qty_diff": 0.08,
+    "detail_csv": "results\\v2\\mt5_reconcile_mismatches.csv",
+    "result": "FAIL",
+    "statement": "NOT RECONCILED. 7950 field-bar mismatches. Do not describe the two implementations as agreeing until this is zero.",
+    "signal_mismatches": 756,
+    "signal_value_mismatches": 0,
+    "signal_coverage_only": 756,
+    "signal_comparisons": 135018
+  },
+  "trades": {
+    "python": 307,
+    "mt5": 307,
+    "matched_entries": 307
+  },
+  "pnl": {
+    "python_gross": 6276.490000000005,
+    "python_net": 3624.471849999977,
+    "mt5_gross": 6230.17,
+    "mt5_net": 3422.59,
+    "python_costs": 2652.0181500000203,
+    "mt5_costs": 2807.58
+  },
+  "cost_components": {
+    "python": {
+      "swap": -2362.1133999999824,
+      "commission": -66.2147499999998,
+      "spread_slip": -223.69000000003825
+    },
+    "mt5": {
+      "swap": -2414.2500000000005,
+      "commission": -60.26999999999995,
+      "spread_slip": -333.0599999999995
+    }
+  }
+}

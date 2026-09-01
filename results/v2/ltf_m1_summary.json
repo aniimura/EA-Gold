@@ -1,0 +1,631 @@
+{
+  "tag": "ltf_m1",
+  "labels": [
+    "FLAT_CARRY_ASSUMPTION",
+    "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+    "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+  ],
+  "config": {
+    "h4_file": null,
+    "ltf_file": "M1",
+    "swap_file": null,
+    "events_file": null,
+    "date_from": "2022-01-01",
+    "date_to": "2026-08-31",
+    "symbol": "GOLD",
+    "timeframe": "H4",
+    "capital": 100000.0,
+    "risk_pct": 0.1,
+    "contract_oz": 100.0,
+    "lot_step": 0.01,
+    "max_notional_x": 1.5,
+    "sleeve_mode": "all",
+    "direction_mode": "symmetric",
+    "atr_len": 20,
+    "atr_mult": 2.5,
+    "exit_scale": 1.0,
+    "allow_reversal": true,
+    "friday_filter": true,
+    "friday_hour": 13,
+    "friday_basis": "open",
+    "lookahead_audit": false,
+    "same_bar_fill_audit": false,
+    "point": 0.01,
+    "commission_per_lot_rt": 7.85,
+    "slippage_points": 5.0,
+    "cost_scale": 1.0,
+    "use_costs": true,
+    "swap_model": "flat",
+    "swap_scenario": "base",
+    "swap_missing_policy": "error",
+    "swap_long_flat": -52.4,
+    "swap_short_flat": 23.58,
+    "triple_weekday": 2,
+    "stop_mode": "ltf",
+    "ltf_stop_slippage_points": 5.0,
+    "close_final_position_with_costs": false,
+    "financing_timing": "post-fill",
+    "log_open_sleeves_at_end": false,
+    "v1_compat": false,
+    "event_mode": "report-only",
+    "seed": 20260901,
+    "bootstrap_n": 20000,
+    "n_configs_tested": 1,
+    "tag": "ltf_m1",
+    "outdir": "results\\v2",
+    "label_flags": [],
+    "labels": [
+      "FLAT_CARRY_ASSUMPTION",
+      "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+      "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+    ],
+    "sleeve_defs": [
+      [
+        "fast",
+        20,
+        10
+      ],
+      [
+        "medium",
+        55,
+        20
+      ],
+      [
+        "slow",
+        120,
+        40
+      ]
+    ]
+  },
+  "code_version": "8bf13447c6c3",
+  "config_fingerprint": "02fe403a9ab9",
+  "statistics": {
+    "seed": 20260901,
+    "resamples": 20000,
+    "risk": {
+      "years": 4.6571,
+      "initial_capital": 100000.0,
+      "final_equity": 102795.9022460353,
+      "net_profit": 2795.902246035301,
+      "return_pct": 2.795902246035301,
+      "cagr_pct": 0.5938716986287895,
+      "max_dd_pct": 2.7079578018363493,
+      "max_dd_money": 2838.5903312609444,
+      "ann_vol_pct": 2.0441417106581943,
+      "sortino": 0.2835874980028754,
+      "calmar": 0.21930611260857422,
+      "exposure_pct": 72.55065223424924,
+      "turnover_notional": 3835979.3394469996,
+      "turnover_x_equity_per_year": 8.264689409039287,
+      "skew_daily": -0.40966175480108835,
+      "kurtosis_daily": 21.448790800399376
+    },
+    "trade_level": {
+      "n": 305,
+      "mean_R": 0.21446972791736832,
+      "median_R": -0.5849758921734858,
+      "win_rate_pct": 33.442622950819676,
+      "profit_factor_gross": 1.3845352738465064,
+      "t_test": {
+        "method": "one_sample_t_test",
+        "status": "SECONDARY - retained for reference only",
+        "n": 305,
+        "mean": 0.21446972791736832,
+        "sd": 2.274956798475277,
+        "t": 1.6464280886478688,
+        "p_two_sided": 0.10070900414661889,
+        "limitation": "Assumes independent, roughly symmetric observations. Sleeve trades overlap and the distribution is strongly right-skewed, so this p-value is optimistic. Use the campaign and block bootstraps."
+      }
+    },
+    "bootstrap_iid_trades": {
+      "method": "iid_sleeve_trade_bootstrap",
+      "units": "R per sleeve trade",
+      "point_estimate": 0.21446972791736832,
+      "bootstrap_mean": 0.2136502962167679,
+      "standard_error": 0.13014361744413327,
+      "ci90": [
+        0.010435737207999993,
+        0.43618210176191863
+      ],
+      "ci95": [
+        -0.02362942124194851,
+        0.4845319995690483
+      ],
+      "ci99": [
+        -0.08822286759386946,
+        0.5734207962786828
+      ],
+      "p_mean_le_zero": 0.04045,
+      "effective_observations": 305,
+      "resamples": 20000,
+      "assumptions": "SECONDARY / FOR COMPARISON ONLY. Assumes sleeve trades are independent draws. They are not: up to three sleeves hold the same directional move at once, so this interval is too narrow and the p-value too small."
+    },
+    "campaign_level": {
+      "n": 122,
+      "mean_net_R_equal_weighted": -0.2754056798532993,
+      "median_net_R": -0.6566127272066042,
+      "risk_weighted_net_R": 0.09875461259645582,
+      "mean_net_usd": 20.54061062323982,
+      "median_net_usd": -75.97556346049369,
+      "win_rate_pct": 24.59016393442623,
+      "profit_factor_net": 1.2330011329298096,
+      "median_days": 5.166666666666667,
+      "size_effect_note": "The equal-weighted mean R and the risk-weighted R disagree in sign for this strategy, and that disagreement is a finding rather than an artefact. Position size is not constant by design: a campaign in which all three sleeves align risks roughly three times what a single-sleeve campaign risks. Winners are the big-risk campaigns and losers the small ones, so equal-weighting understates the money and risk-weighting understates how often the strategy is wrong. Read both, and treat the USD bootstrap as the test of whether the average campaign makes money."
+    },
+    "bootstrap_campaigns": {
+      "method": "campaign_bootstrap",
+      "units": "net R per campaign",
+      "point_estimate": -0.2754056798532993,
+      "bootstrap_mean": -0.274751609858084,
+      "standard_error": 0.10123705487772465,
+      "ci90": [
+        -0.4329916563498345,
+        -0.10155177591872978
+      ],
+      "ci95": [
+        -0.46035064523395364,
+        -0.06444322543628894
+      ],
+      "ci99": [
+        -0.5069548330645106,
+        0.008908662703953123
+      ],
+      "p_mean_le_zero": 0.99325,
+      "effective_observations": 121,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. One campaign is one bet: it opens when the first sleeve leaves flat and closes when all are flat again, so overlapping sleeve trades collapse into a single observation. Campaigns are still not strictly independent - consecutive trends in one instrument share a regime - but they are far closer to it than sleeve trades."
+    },
+    "bootstrap_campaigns_usd": {
+      "method": "campaign_bootstrap_usd",
+      "units": "net USD per campaign",
+      "point_estimate": 20.54061062323982,
+      "bootstrap_mean": 20.41156434296275,
+      "standard_error": 36.05620852160288,
+      "ci90": [
+        -33.68542801229808,
+        84.33564433584797
+      ],
+      "ci95": [
+        -41.730674008901765,
+        98.04940918482036
+      ],
+      "ci99": [
+        -56.35809250559364,
+        126.46415319461029
+      ],
+      "p_mean_le_zero": 0.302,
+      "effective_observations": 122,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples campaign net P&L in dollars, so a campaign that risked three sleeves counts for what it actually made rather than being normalised away. This is the test of whether the average campaign is profitable after every modelled cost."
+    },
+    "bootstrap_block_monthly": {
+      "method": "monthly_block_bootstrap",
+      "units": "mean daily return",
+      "point_estimate": 1.9899026845423488e-05,
+      "bootstrap_mean": 1.9943095217219938e-05,
+      "standard_error": 2.8383299405746644e-05,
+      "ci90": [
+        -2.560467507428083e-05,
+        6.757388177551592e-05
+      ],
+      "ci95": [
+        -3.363884810779119e-05,
+        7.706093074632877e-05
+      ],
+      "ci99": [
+        -4.9244578356807383e-05,
+        9.652644307988966e-05
+      ],
+      "p_mean_le_zero": 0.24675,
+      "effective_observations": 56,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples whole monthly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (56), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+    },
+    "bootstrap_block_quarterly": {
+      "method": "quarterly_block_bootstrap",
+      "units": "mean daily return",
+      "point_estimate": 1.9899026845423488e-05,
+      "bootstrap_mean": 1.9834432752144253e-05,
+      "standard_error": 2.512664334394914e-05,
+      "ci90": [
+        -2.1461656030579053e-05,
+        6.1948468899414e-05
+      ],
+      "ci95": [
+        -2.9012209387208147e-05,
+        6.953179963753464e-05
+      ],
+      "ci99": [
+        -4.3500122860932155e-05,
+        8.488345999019287e-05
+      ],
+      "p_mean_le_zero": 0.2139,
+      "effective_observations": 19,
+      "resamples": 20000,
+      "assumptions": "PRIMARY. Resamples whole quarterly blocks so serial dependence inside a block is preserved. The effective sample is the number of blocks (19), not the number of days (1446) - which is the honest count and the reason the interval is wide."
+    },
+    "sharpe": {
+      "n_days": 1446,
+      "sharpe_period": 0.015453295461077371,
+      "sharpe_naive": 0.24531346035848367,
+      "autocorr_factor": 1.1742864605536922,
+      "sharpe_lo_adjusted": 0.2880682750905423,
+      "autocorr_lags": 20,
+      "first_five_rho": [
+        -0.0328,
+        -0.0121,
+        0.0492,
+        0.0341,
+        -0.0077
+      ]
+    },
+    "deflated_sharpe": {
+      "deflated_sharpe": null,
+      "reason": "insufficient_inputs: needs >= 2 trials, a positive spread of trial Sharpes and >= 30 observations. Run experiments.py, which supplies all three."
+    },
+    "concentration_trades": {
+      "trade_gross_n": 305,
+      "trade_gross_total": 5152.7635960352945,
+      "trade_gross_mean": 16.89430687224687,
+      "trade_gross_median": -46.38000000000011,
+      "trade_gross_top1_sum": 1460.5,
+      "trade_gross_top1_share_pct": 28.344013319837856,
+      "trade_gross_excl_top1_total": 3692.2635960352945,
+      "trade_gross_excl_top1_mean": 12.145603934326626,
+      "trade_gross_top3_sum": 3141.4800000000005,
+      "trade_gross_top3_share_pct": 60.966895559058024,
+      "trade_gross_excl_top3_total": 2011.283596035294,
+      "trade_gross_excl_top3_mean": 6.65987945707051,
+      "trade_gross_top5_sum": 4283.499999999999,
+      "trade_gross_top5_share_pct": 83.13014793257476,
+      "trade_gross_excl_top5_total": 869.2635960352954,
+      "trade_gross_excl_top5_mean": 2.8975453201176515,
+      "trade_gross_top10_sum": 6966.7199999999975,
+      "trade_gross_top10_share_pct": 135.20356348892895,
+      "trade_gross_excl_top10_total": -1813.956403964703,
+      "trade_gross_excl_top10_mean": -6.149004759202383
+    },
+    "concentration_campaigns": {
+      "campaign_net_n": 122,
+      "campaign_net_total": 2505.954496035258,
+      "campaign_net_mean": 20.54061062323982,
+      "campaign_net_median": -75.97556346049369,
+      "campaign_net_top1_sum": 3105.7151999999965,
+      "campaign_net_top1_share_pct": 123.93342356829052,
+      "campaign_net_excl_top1_total": -599.7607039647382,
+      "campaign_net_excl_top1_mean": -4.956700032766432,
+      "campaign_net_top3_sum": 5889.337899999998,
+      "campaign_net_top3_share_pct": 235.01376059771584,
+      "campaign_net_excl_top3_total": -3383.3834039647395,
+      "campaign_net_excl_top3_mean": -28.431793310628063,
+      "campaign_net_top5_sum": 7773.767721126791,
+      "campaign_net_top5_share_pct": 310.2118467604216,
+      "campaign_net_excl_top5_total": -5267.813225091533,
+      "campaign_net_excl_top5_mean": -45.02404465890199,
+      "campaign_net_top10_sum": 10058.008100091625,
+      "campaign_net_top10_share_pct": 401.3643550194022,
+      "campaign_net_excl_top10_total": -7552.0536040563675,
+      "campaign_net_excl_top10_mean": -67.42905003621756
+    },
+    "interpretation_warning": "A confidence interval that excludes zero is not proof of a durable edge. This is one instrument, one broker cost model and one regime. Treat every figure here as a description of this sample, not a forecast."
+  },
+  "sample_windows": {
+    "in_sample_start": "2021-12-31 16:00:00",
+    "in_sample_end": "2026-08-28 20:00:00",
+    "in_sample_bars": 7206,
+    "out_of_sample_start": null,
+    "out_of_sample_end": null,
+    "out_of_sample_bars": 0,
+    "declaration": "NO OUT-OF-SAMPLE PERIOD EXISTS. The whole record above was visible while this framework was written, and it covers one instrument in one regime - the largest gold bull market on record. Nothing here has been validated on data the author had not already seen. Treat every statistic as a description of this sample."
+  },
+  "notional": {
+    "bars_evaluated": 7084,
+    "cap_binding_bars": 0,
+    "cap_binding_pct": 0.0,
+    "intended_exposure_lot_bars": 290.0099999999912,
+    "executed_exposure_lot_bars": 290.0099999999912,
+    "exposure_shortfall_pct": 0.0,
+    "net_target_rounding_loss_lot_bars": 2.671474153004283e-15,
+    "sizing_intended_lots": 9.803401186004049,
+    "sizing_executed_lots": 8.359999999999966,
+    "sizing_rounding_loss_lots": 1.4434011860040448,
+    "sizing_rounding_loss_pct": 14.723473604902908,
+    "max_abs_position_lots": 0.2
+  },
+  "stops": {
+    "mode": "ltf",
+    "h4_approximated_stops": 0,
+    "ltf_stops_resolved_at_stop_price": 123,
+    "ltf_stops_gapped_through": 0,
+    "ltf_ambiguous_same_bar_events": 21,
+    "h4_bars_without_ltf_coverage": 0,
+    "ltf_coverage": {
+      "h4_bars": 7206,
+      "covered": 7206,
+      "uncovered": 0,
+      "partial": 39,
+      "ltf_bars": 1649768,
+      "expected_per_h4": 240,
+      "uncovered_samples": [],
+      "coverage_pct": 100.0
+    },
+    "ambiguity_rule": "all sleeves whose stop is touched inside one LTF bar are filled at their own stop price with adverse slippage, in the fixed order fast -> medium -> slow; the intrabar path is unknowable so the event is logged, never guessed",
+    "ambiguity_log": [
+      {
+        "time": "2022-02-24 00:00:00",
+        "sleeves": [
+          "fast",
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2022-03-14 15:55:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2022-04-19 00:00:00",
+        "sleeves": [
+          "fast",
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2022-06-06 00:00:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2022-09-30 00:00:00",
+        "sleeves": [
+          "fast",
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2022-10-21 19:01:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2023-02-02 16:56:00",
+        "sleeves": [
+          "fast",
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2023-04-10 01:00:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2023-06-23 16:30:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2023-07-31 15:40:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2023-12-13 23:07:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2024-01-11 15:30:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2024-01-12 10:07:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2024-01-19 13:40:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2024-03-21 16:26:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2024-06-07 12:27:00",
+        "sleeves": [
+          "fast",
+          "medium"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2024-12-19 09:25:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2025-05-20 16:59:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2025-06-19 09:03:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2026-05-21 04:23:00",
+        "sleeves": [
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      },
+      {
+        "time": "2026-05-29 10:35:00",
+        "sleeves": [
+          "fast",
+          "medium",
+          "slow"
+        ],
+        "rule": "all filled at their own stop price, adverse slippage, fixed order fast->medium->slow"
+      }
+    ]
+  },
+  "financing_model": {
+    "model": "flat",
+    "scenario": null,
+    "missing_policy": null,
+    "rows_in_table": 0,
+    "table_first": null,
+    "table_last": null,
+    "rollovers_priced_historically": 0,
+    "rollovers_priced_by_fallback": 0,
+    "distinct_missing_dates": 0,
+    "missing_sample": []
+  },
+  "financing_reconciliation": {
+    "actual_account_swap": -2335.2845999999813,
+    "sum_of_virtual_sleeve_swap": -2357.1877999999997,
+    "netting_difference": 21.903200000018387,
+    "explanation": "The account finances ONE netted position. Each sleeve is priced as if it stood alone. When sleeves oppose each other, or when the notional cap or lot step trims the net target below the sum of sleeve sizes, the account carries less (or more) than the sleeves imply. The gap is shown rather than smoothed away."
+  },
+  "data_quality": {
+    "h4": {
+      "name": "GOLD H4 (repo cache)",
+      "rows": 7206,
+      "first": "2021-12-31 16:00:00",
+      "last": "2026-08-28 20:00:00",
+      "duplicates": 0,
+      "non_monotonic": 0,
+      "nan_ohlc": 0,
+      "invalid_bars": 0,
+      "nonpositive": 0,
+      "fatal": 0,
+      "notes": [],
+      "samples": {}
+    },
+    "ltf": {
+      "name": "GOLD M1 (repo cache)",
+      "rows": 1649768,
+      "first": "2021-12-31 15:00:00",
+      "last": "2026-08-28 23:59:00",
+      "duplicates": 0,
+      "non_monotonic": 0,
+      "nan_ohlc": 0,
+      "invalid_bars": 0,
+      "nonpositive": 0,
+      "fatal": 0,
+      "notes": [],
+      "samples": {}
+    }
+  },
+  "diagnostics": {
+    "cap_binding_bars": 0,
+    "lot_rounding_loss_lots": 2.671474153004283e-15,
+    "sizing_intended_lots": 9.803401186004049,
+    "sizing_executed_lots": 8.359999999999966,
+    "sizing_rounding_loss_lots": 1.4434011860040448,
+    "entries_refused_unsizable": 0,
+    "intended_exposure_lots": 290.0099999999912,
+    "executed_exposure_lots": 290.0099999999912,
+    "stops_h4_approx": 0,
+    "stops_ltf_exact": 123,
+    "stops_ltf_gap": 0,
+    "ltf_ambiguous_events": 21,
+    "ltf_missing_h4_bars": 0,
+    "trades_near_events": 0,
+    "final_equity": 102795.9022460353,
+    "net_profit": 2795.902246035303,
+    "cost_spread_slip": 226.65000000003852,
+    "cost_commission": 65.58674999999977,
+    "cost_swap": -2335.2845999999813,
+    "turnover_oz": 1671.0,
+    "turnover_notional": 3835979.3394469996,
+    "n_fills": 473,
+    "financing_coverage": {
+      "model": "flat",
+      "scenario": null,
+      "missing_policy": null,
+      "rows_in_table": 0,
+      "table_first": null,
+      "table_last": null,
+      "rollovers_priced_historically": 0,
+      "rollovers_priced_by_fallback": 0,
+      "distinct_missing_dates": 0,
+      "missing_sample": []
+    },
+    "ltf_coverage": {
+      "h4_bars": 7206,
+      "covered": 7206,
+      "uncovered": 0,
+      "partial": 39,
+      "ltf_bars": 1649768,
+      "expected_per_h4": 240,
+      "uncovered_samples": [],
+      "coverage_pct": 100.0
+    },
+    "labels": [
+      "FLAT_CARRY_ASSUMPTION",
+      "FRIDAY_FILTER_ON_BAR_OPEN__DIVERGES_FROM_PINE",
+      "CARRY_CHARGED_AFTER_OPEN_FILL__V1_COMPAT"
+    ],
+    "ltf_timeframe": "M1",
+    "code_version": "8bf13447c6c3",
+    "config_fingerprint": "02fe403a9ab9"
+  }
+}
