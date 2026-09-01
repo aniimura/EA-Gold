@@ -227,6 +227,13 @@ header.mast{padding:52px 0 32px;border-bottom:1px solid var(--rule)}
 border:1px solid var(--rule);border-radius:999px;padding:3px 10px;background:var(--surface)}
 .chip.ok{border-color:var(--pos);color:var(--pos);background:var(--pos-soft)}
 .chip.warn{border-color:var(--neg);color:var(--neg);background:var(--neg-soft)}
+.related{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.related a{display:inline-flex;flex-direction:column;gap:1px;text-decoration:none;
+border:1px solid var(--rule);border-radius:6px;padding:7px 12px;background:var(--surface)}
+.related a:hover{border-color:var(--accent)}
+.related .r-label{color:var(--accent);font-size:13px;font-weight:600}
+.related .r-note{color:var(--muted);font-size:11.5px}
+.related .r-head{color:var(--muted);font-size:11.5px}
 .jp{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--accent);
 border-radius:0 3px 3px 0;padding:18px 22px;margin-top:26px;box-shadow:var(--shadow)}
 .jp p{font-size:15px;color:var(--ink2);max-width:64ch}
@@ -331,7 +338,13 @@ def build():
       % (mt5["trades"].get("matched_entries", 0), mt5["trades"]["python"]))
     A('<span class="chip ok">%d tests, 0 failures</span>' % d["tests"]["total"])
     A('<span class="chip warn">no out-of-sample data</span>')
-    A("</div></div></header>")
+    A("</div>")
+    # Reciprocal link, so the two published reports are reachable from each
+    # other rather than only from a URL someone has to be told.
+    A('<nav class=related><span class=r-head>Other reports in this repository:'
+      '</span><a href="../"><span class=r-label>Scalp Gold M1</span>'
+      '<span class=r-note>GOLD M1 &middot; Bollinger mean-reversion</span></a></nav>')
+    A("</div></header>")
 
     # ---- Japanese summary
     A('<div class=jp><div class=eyebrow>要約</div>')

@@ -26,6 +26,21 @@ from report.chart import _excursions
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+# Other reports published from this repository. Listed here rather than
+# hard-coded into the template so a page stays a generic artefact of whatever
+# strategy produced it - `build()` filters out the one it is currently writing.
+RELATED = [
+    {"name": "ScalpGoldM1",
+     "href": "./",
+     "label": "Scalp Gold M1",
+     "note": "GOLD M1 · Bollinger mean-reversion"},
+    {"name": "XauMsvsd",
+     "href": "xau-msvsd/",
+     "label": "XAU Multi-Speed Donchian",
+     "note": "GOLD H4 · trend · verified across Pine, Python and MT5"},
+]
+
+
 def _load_json(path):
     if not os.path.isfile(path):
         return {}
@@ -46,12 +61,15 @@ def _verdict(name):
     return {"verdict": m.group(1), "match_rate": float(tr.group(1)) if tr else None}
 
 
-def build(strategy, strategy_path=None):
+def build(strategy, strategy_path=None, related=None):
     """Write ``index.html`` at the repository root and return its path.
 
     ``strategy_path`` is only used to print the exact commands that regenerate
     the page, so the instructions at the top always name the file that actually
     produced it rather than a guess.
+
+    ``related`` overrides the sibling-report links; the default is ``RELATED``
+    with the current strategy filtered out, so a page never links to itself.
     """
     name = strategy.name
     tr_path = os.path.join(config.RESULTS_DIR, "%s_py_trades.csv" % name)
@@ -107,6 +125,8 @@ def build(strategy, strategy_path=None):
         "py": py,
         "mt5": mt5,
         "recon": _verdict(name),
+        "related": [r for r in (related if related is not None else RELATED)
+                    if r.get("name") != name],
     }
 
     html = _TEMPLATE.replace("__META__", json.dumps(meta, default=str)) \
@@ -155,6 +175,14 @@ _TEMPLATE = r"""<!doctype html>
   header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
   h1{margin:0 0 6px;font-size:22px;letter-spacing:-.01em}
   .sub{color:var(--muted);font-size:13px}
+  .related{display:flex;flex-wrap:wrap;gap:8px;margin:-8px 0 22px}
+  .related a{display:inline-flex;flex-direction:column;gap:1px;text-decoration:none;
+             border:1px solid var(--line);border-radius:6px;padding:7px 12px;
+             background:var(--panel);min-width:0}
+  .related a:hover{border-color:var(--accent)}
+  .related .r-label{color:var(--accent);font-size:13px;font-weight:600}
+  .related .r-note{color:var(--muted);font-size:11.5px}
+  .related .r-head{color:var(--muted);font-size:11.5px;align-self:center;margin-right:2px}
   .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;
          font-weight:600;margin-left:8px;vertical-align:2px}
   .pass{background:rgba(8,153,129,.14);color:var(--green)}
@@ -208,6 +236,8 @@ _TEMPLATE = r"""<!doctype html>
     <h1 id="title"></h1>
     <div class="sub" id="subtitle"></div>
   </header>
+
+  <nav class="related" id="related"></nav>
 
   <div class="cards" id="cards"></div>
 
@@ -275,6 +305,14 @@ document.getElementById("subtitle").innerHTML = sub +
     "Python vs MT5: " + META.recon.verdict +
     (META.recon.match_rate!=null ? " · " + META.recon.match_rate + "% exact" : "") +
    '</span>' : "");
+
+/* ---------- sibling reports ---------- */
+const rel = META.related || [];
+document.getElementById("related").innerHTML = rel.length
+  ? '<span class="r-head">Other reports in this repository:</span>' + rel.map(r =>
+      '<a href="' + r.href + '"><span class="r-label">' + r.label + '</span>' +
+      '<span class="r-note">' + r.note + '</span></a>').join("")
+  : "";
 
 /* ---------- stat cards ---------- */
 const py = META.py || {};
